@@ -1,0 +1,100 @@
+// Copyright (c) 2023 Nordic Semiconductor ASA
+// SPDX-License-Identifier: Apache-2.0
+
+/dts-v1/;
+#include <nordic/nrf52805_caaa.dtsi>
+
+
+/ {
+	model = "move_sensor_board";
+	compatible = "move-sensor-board";
+
+	chosen {
+		zephyr,sram = &sram0;
+		zephyr,flash = &flash0;
+		zephyr,code-partition = &slot0_partition;
+	};
+
+	leds {
+		compatible = "gpio-leds";
+		led0: led_0 {
+			gpios = <&gpio0 12 GPIO_ACTIVE_HIGH>;
+			label = "Green LED 0";
+		};
+		out0: out_0 {
+			gpios = <&gpio0 20 GPIO_ACTIVE_LOW>;
+			label = "Out pin";
+		};
+	};
+
+	aliases {
+		led0 = &led0;
+		out0 = &out0;
+		i2c0 = &i2c0;
+	};
+};
+
+&gpio0 {
+	status = "okay";
+};
+
+&pinctrl {
+	i2c0_default: i2c0_default {
+		group1 {
+			psels = <NRF_PSEL(TWIM_SDA, 0, 0)>, <NRF_PSEL(TWIM_SCL, 0, 1)>;
+		};
+	};
+
+	i2c0_sleep: i2c0_sleep {
+		group1 {
+			psels = <NRF_PSEL(TWIM_SDA, 0, 0)>, <NRF_PSEL(TWIM_SCL, 0, 1)>;
+			low-power-enable;
+		};
+	};
+};
+
+&i2c0 {
+	compatible = "nordic,nrf-twi";
+	status = "okay";
+	pinctrl-0 = <&i2c0_default>;
+	pinctrl-1 = <&i2c0_sleep>;
+	pinctrl-names = "default", "sleep";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	vl53l0x@29 {
+		compatible = "st,vl53l0x";
+		reg = <0x29>;
+		xshut-gpios = <&gpio0 16 GPIO_ACTIVE_HIGH>;
+	};
+};
+
+
+
+&flash0 {
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		boot_partition: partition@0 {
+			label = "mcuboot";
+			reg = <0x0 0xc000>;
+		};
+		slot0_partition: partition@c000 {
+			label = "image-0";
+			reg = <0xc000 0xa000>;
+		};
+		slot1_partition: partition@16000 {
+			label = "image-1";
+			reg = <0x16000 0xa000>;
+		};
+		scratch_partition: partition@20000 {
+			label = "image-scratch";
+			reg = <0x20000 0xa000>;
+		};
+		storage_partition: partition@2a000 {
+			label = "storage";
+			reg = <0x2a000 0x6000>;
+		};
+	};
+};
+
