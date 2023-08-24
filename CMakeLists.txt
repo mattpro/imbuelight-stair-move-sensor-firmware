@@ -7,4 +7,5 @@ project(blinky)
 target_sources(app PRIVATE 
                     src/main.c 
                     src/utils.c 
-                    src/adc.c)
+                    src/adc.c
+                    src/distance_sensor.c)

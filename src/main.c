@@ -1,20 +1,17 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/i2c.h>
+#include <zephyr/drivers/sensor.h>
 #include "utils.h"
 #include "adc.h"
+#include "distance_sensor.h"
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
 
-#include <zephyr/drivers/i2c.h>
-#include <zephyr/drivers/sensor.h>
-
-#include <nrfx_saadc.h>
 
 int distance = 0;
 int light = 0;
-struct sensor_value prox;
-
 
 
 void main(void)
@@ -24,20 +21,12 @@ void main(void)
 	led_init();
 	out_init();
 	adc_init();
+	distance_sensor_init();
 	led_start();
-
-	const struct device *const tof_dev = DEVICE_DT_GET_ONE(st_vl53l0x);
-	if (!device_is_ready(tof_dev)) {
-		printk("%s: device not ready.\n", tof_dev->name);
-		return 0;
-	}
-	
 
 	while (1) 
 	{
-		sensor_sample_fetch(tof_dev);
-		sensor_channel_get(tof_dev, SENSOR_CHAN_DISTANCE, &prox);
-		distance = prox.val1/8 * 100 + prox.val2/10000;
+		distance = get_distance();
 		light = get_light_intensity();
 
 		LOG_INF("distance: %4d cm light: %4d", distance, light); 
