@@ -26,7 +26,7 @@ int get_distance(void)
 
 	sensor_sample_fetch(tof_dev);
 	sensor_channel_get(tof_dev, SENSOR_CHAN_DISTANCE, &prox);
-	distance = prox.val1/8 * 100 + prox.val2/10000;
+	distance = prox.val1 * 100 + prox.val2/10000;
 
 	return distance;
 }

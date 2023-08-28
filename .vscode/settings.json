@@ -1,0 +1,5 @@
+{
+    "files.associations": {
+        "distance_sensor.h": "c"
+    }
+}
