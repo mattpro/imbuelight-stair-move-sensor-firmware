@@ -29,10 +29,10 @@ void led_start(void)
 {
     bool led_is_on;
 
-    for(int i = 0 ; i < 40 ; i ++ )
+    for(int i = 0 ; i < 20 ; i ++ )
     {
         gpio_pin_toggle_dt(&led);
-		k_msleep(10);
+		k_msleep(25);
     }
 }
 

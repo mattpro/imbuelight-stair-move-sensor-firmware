@@ -34,10 +34,11 @@ static struct nvs_fs fs;
 
 
 
-static const struct bt_data ad[] = {
+static struct bt_data ad[] = {
 	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR)),
 	BT_DATA(BT_DATA_NAME_COMPLETE, DEVICE_NAME, DEVICE_NAME_LEN),
 };
+
 
 
 uint8_t settings_distance_cm = 80;
@@ -122,24 +123,28 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
 };
 
 
-void main(void)
-{	
-	int err;
 
-	LOG_INF("Imbue light move controller ver 1.0 start");
-	led_init();
-	led_start();
-	out_init();
-	adc_init();
-	distance_sensor_init();
-	led_start();
 
-	err = bt_enable(NULL);
-	if (err) 
-	{
-		LOG_INF("Bluetooth init failed (err %d)\n", err);
-		return 0;
-	}
+
+	
+
+static void bt_ready(int err)
+{
+	uint8_t addr_s[3];
+	bt_addr_le_t addr = {0};
+	size_t count = 1;
+
+	bt_id_get(&addr, &count);
+	addr_s[0] = addr.a.val[0] ^ addr.a.val[1];
+	addr_s[1] = addr.a.val[2] ^ addr.a.val[3];
+	addr_s[2] = addr.a.val[4] ^ addr.a.val[5];
+
+	char device_name[24];
+
+	sprintf(device_name, "Imbue Light Move %02X%02X%02X", addr_s[0], addr_s[1], addr_s[2]);
+	
+	ad[1].data = (const uint8_t*)device_name;
+	ad[1].data_len = strlen((const char*)device_name);
 
 	err = bt_nus_init(&nus_cb);
 	if (err) 
@@ -154,6 +159,28 @@ void main(void)
 		LOG_INF("Advertising failed to start (err %d)\n", err);
 		return 0;
 	}
+}
+
+void main(void)
+{	
+	int err;
+
+	LOG_INF("Imbue light move controller ver 1.0 start");
+	led_init();
+	led_start();
+	out_init();
+	adc_init();
+	distance_sensor_init();
+	led_start();
+
+	err = bt_enable(bt_ready);
+	if (err) 
+	{
+		LOG_INF("Bluetooth init failed (err %d)\n", err);
+		return 0;
+	}
+
+
 
 
 
@@ -230,9 +257,14 @@ void main(void)
 		set_led(sensor_state);
 		set_out(sensor_state);
 
-		sprintf(nus_buffer, "s:%c d:%3d l:%4d", sensor_state? '1' : '0', distance, light); 
+		sprintf(nus_buffer, "%cD%3d/%3dL%4d/%4d", sensor_state? '1' : '0', distance, settings_distance_cm, light, settings_light_desinty); 
+		// for (int i = 0 ; i < 25 ; i++)
+		// {
+		// 	nus_buffer[i] = i + 48;
+		// }
 		if ( connection_state )
 		{
+			//if (bt_nus_send(NULL, nus_buffer, 20) )
 			if (bt_nus_send(NULL, nus_buffer, strlen(nus_buffer))) 
 			{
 			//	LOG_WRN("Failed to send data over BLE connection");
