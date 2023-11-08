@@ -4,7 +4,7 @@
 
 #include <zephyr/kernel.h>
 
-void distance_sensor_init(void);
-int get_distance(void);
+int distance_sensor_init(void);
+uint16_t get_distance(void);
 
 #endif

@@ -10,7 +10,7 @@ LOG_MODULE_REGISTER(light, CONFIG_LOG_DEFAULT_LEVEL);
 static const struct device *const tof_dev = DEVICE_DT_GET_ONE(st_vl53l0x);
 static struct sensor_value prox;
 
-void distance_sensor_init(void)
+int distance_sensor_init(void)
 {	
 	if (!device_is_ready(tof_dev)) 
 	{
@@ -20,9 +20,9 @@ void distance_sensor_init(void)
 }
 
 
-int get_distance(void)
+uint16_t get_distance(void)
 {
-	int distance;
+	uint16_t distance;
 
 	sensor_sample_fetch(tof_dev);
 	sensor_channel_get(tof_dev, SENSOR_CHAN_DISTANCE, &prox);

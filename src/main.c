@@ -26,9 +26,10 @@ LOG_MODULE_REGISTER(main, CONFIG_LOG_DEFAULT_LEVEL);
 #define NVS_PARTITION_DEVICE	FIXED_PARTITION_DEVICE(NVS_PARTITION)
 #define NVS_PARTITION_OFFSET	FIXED_PARTITION_OFFSET(NVS_PARTITION)
 
-#define SETTINGS_DISTANCE_ID 	1
-#define SETTINGS_LIGHT_ID		2
-
+#define SETTINGS_DISTANCE_ID 			1
+#define SETTINGS_LIGHT_ID				2
+#define SETTINGS_DISTANCE_ENABLE_ID		3
+#define SETTINGS_LIGHT_ENABLE_ID		4
 
 static struct nvs_fs fs;
 
@@ -40,20 +41,39 @@ static struct bt_data ad[] = {
 };
 
 
+struct settings_t{
+	uint8_t threshold_distance;
+	int16_t threshold_light_intensity;
+	bool 	enable_distance;
+	bool 	enable_light_intensity;
+};
+struct settings_t settings;
 
-uint8_t settings_distance_cm = 80;
-int16_t settings_light_desinty = 200;
+
 
 
 uint8_t nus_buffer[25];
-int distance = 0;
-int light = 0;
+uint16_t distance = 0;
+int16_t light = 0;
 bool sensor_state = false;
 bool connection_state = false;
 
-bool save_setting_distance_flag = false;
-bool save_setting_light_flag = false;
+bool save_setting_flag = false;
 
+
+
+#define DEFAULT_SETTINGS_THRESHOLD_DISTANCE 		80
+#define DEFAULT_SETTINGS_THRESHOLD_LIGHT_INTENSITY 	200
+#define DEFAULT_SETTINGS_ENABLE_DISTANCE 			true
+#define DEFAULT_SETTINGS_ENABLE_LIGHT_INTENSITY 	false
+
+void SETTINGS_load_default(void)
+{
+	settings.threshold_distance 		= DEFAULT_SETTINGS_THRESHOLD_DISTANCE;
+	settings.threshold_light_intensity 	= DEFAULT_SETTINGS_THRESHOLD_LIGHT_INTENSITY;
+	settings.enable_distance 			= DEFAULT_SETTINGS_ENABLE_DISTANCE;
+	settings.enable_light_intensity 	= DEFAULT_SETTINGS_ENABLE_LIGHT_INTENSITY;
+}
 
 
 static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data, uint16_t len)
@@ -64,18 +84,20 @@ static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data, uint1
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, ARRAY_SIZE(addr));
 	LOG_INF("Received data from: %s msg: %s len: %d", addr, data, len);
 
-	if ( ( data[0] == 'd' ) && ( len >= 4 ) )
+
+	if ( len < 6 )
 	{
-		settings_distance_cm = (data[1] - 48)*100 + (data[2] - 48)*10 + (data[3] - 48); 
-		LOG_INF("Set new distance: %d", settings_distance_cm);
- 		save_setting_distance_flag = true; 
+		LOG_ERR("Recive too short frame");
+		return;
 	}
-	if ( ( data[0] == 'l' ) || ( data[4] == 'l' ) )
-	{
-		settings_light_desinty = (data[5] - 48)*1000 + (data[6] - 48)*100 + (data[7] - 48)*10 + (data[8] - 48) ; 
-		LOG_INF("Set new light: %d", settings_light_desinty);
-		save_setting_light_flag = true;
-	}
+
+	settings.enable_distance 			= data[0] > 0 ? true : false;
+	settings.enable_light_intensity 	= data[1] > 0 ? true : false;
+	settings.threshold_distance     	= (uint16_t)((data[2] >> 8 ) | data[3] );
+	settings.threshold_light_intensity	= (uint16_t)((data[4] >> 8 ) | data[5] );
+
+	save_setting_flag = true; 
+
 	
 	for (int i = 0 ; i < len ; i ++ )
 	{
@@ -180,8 +202,7 @@ void main(void)
 		return 0;
 	}
 
-
-
+	SETTINGS_load_default();
 
 
 	int rc = 0;
@@ -213,42 +234,78 @@ void main(void)
 	}
 
 
-	rc = nvs_read(&fs, SETTINGS_DISTANCE_ID, &settings_distance_cm, sizeof(settings_distance_cm));
+	rc = nvs_read(&fs, SETTINGS_DISTANCE_ID, &settings.threshold_distance, sizeof(settings.threshold_distance));
 	if (rc > 0) 
 	{ /* item was found, show it */
-		LOG_INF("Id: %d, Address: %s\n", SETTINGS_DISTANCE_ID, settings_distance_cm);
+		LOG_INF("Id: %d, Address: %s\n", SETTINGS_DISTANCE_ID, settings.threshold_distance);
 	} 
 	else   
 	{/* item was not found, add it */
-		settings_distance_cm = 80;
-		LOG_WRN("No settings found, set default %d cm", settings_distance_cm);
-		(void)nvs_write(&fs, SETTINGS_DISTANCE_ID, &settings_distance_cm, strlen(settings_distance_cm));
+		settings.threshold_distance = DEFAULT_SETTINGS_THRESHOLD_DISTANCE;
+		LOG_WRN("No settings found, set default %d cm", settings.threshold_distance);
+		(void)nvs_write(&fs, SETTINGS_DISTANCE_ID, &settings.threshold_distance, sizeof(settings.threshold_distance));
 	}
 
-	rc = nvs_read(&fs, SETTINGS_LIGHT_ID, &settings_light_desinty, sizeof(settings_light_desinty));
+	rc = nvs_read(&fs, SETTINGS_LIGHT_ID, &settings.threshold_light_intensity, sizeof(settings.threshold_light_intensity));
 	if (rc > 0) 
 	{ /* item was found, show it */
-		LOG_INF("Id: %d, Address: %s\n", SETTINGS_LIGHT_ID, settings_light_desinty);
+		LOG_INF("Id: %d, Address: %s\n", SETTINGS_LIGHT_ID, settings.threshold_light_intensity);
 	} 
 	else   
 	{/* item was not found, add it */
-		settings_light_desinty = 200;
-		LOG_WRN("No settings found, set default %d", settings_light_desinty);
-		(void)nvs_write(&fs, SETTINGS_LIGHT_ID, &settings_light_desinty, strlen(settings_light_desinty));
+		settings.threshold_light_intensity = DEFAULT_SETTINGS_THRESHOLD_LIGHT_INTENSITY;
+		LOG_WRN("No settings found, set default %d", settings.threshold_light_intensity);
+		(void)nvs_write(&fs, SETTINGS_LIGHT_ID, &settings.threshold_light_intensity, sizeof(settings.threshold_light_intensity));
 	}
 
+	rc = nvs_read(&fs, SETTINGS_DISTANCE_ENABLE_ID, &settings.enable_distance, sizeof(settings.enable_distance));
+	if (rc > 0) 
+	{ /* item was found, show it */
+		LOG_INF("Id: %d, Address: %s\n", SETTINGS_DISTANCE_ENABLE_ID, settings.enable_distance);
+	} 
+	else   
+	{/* item was not found, add it */
+		settings.enable_distance = DEFAULT_SETTINGS_ENABLE_DISTANCE;
+		LOG_WRN("No settings found, set default %d", settings.enable_distance);
+		(void)nvs_write(&fs, SETTINGS_DISTANCE_ENABLE_ID, &settings.enable_distance, sizeof(settings.enable_distance));
+	}
 
+	rc = nvs_read(&fs, SETTINGS_LIGHT_ENABLE_ID, &settings.enable_light_intensity, sizeof(settings.enable_light_intensity));
+	if (rc > 0) 
+	{ /* item was found, show it */
+		LOG_INF("Id: %d, Address: %s\n", SETTINGS_LIGHT_ENABLE_ID, settings.enable_light_intensity);
+	} 
+	else   
+	{/* item was not found, add it */
+		settings.enable_light_intensity = DEFAULT_SETTINGS_ENABLE_DISTANCE;
+		LOG_WRN("No settings found, set default %d", settings.enable_light_intensity);
+		(void)nvs_write(&fs, SETTINGS_LIGHT_ENABLE_ID, &settings.enable_light_intensity, sizeof(settings.enable_light_intensity));
+	}
+
+	SETTINGS_load_default();
+	
 	while (1) 
 	{
-		distance = get_distance();
+		distance = distance* 0.9 + get_distance() * 0.1;
 		light = get_light_intensity();
 
-		LOG_INF("distance: %4dcm max: %4dcm || light: %4d max: %4d", distance, settings_distance_cm, light, settings_light_desinty); 
-
-		if ( ( distance < settings_distance_cm ) && ( light < settings_light_desinty ) )
+		// DISTANCE: Enable 	LIGHT: Disable
+		if ( ( settings.enable_distance == true ) && ( settings.enable_light_intensity == false ) )
 		{
-			sensor_state = true;
+			sensor_state = distance < settings.threshold_distance ? true: false;
 		}
+		// DISTANCE: Disable 	LIGHT: Enable
+		else if ( ( settings.enable_distance == false ) && ( settings.enable_light_intensity == true ) )
+		{
+			sensor_state = light < settings.threshold_light_intensity ? true: false;
+		}
+		// DISTANCE: Enable 	LIGHT: Enable
+		else if ( ( settings.enable_distance == true ) && ( settings.enable_light_intensity == true ) )
+		{
+			if ( (distance < settings.threshold_distance) && ( light < settings.threshold_light_intensity ) ) sensor_state = true;
+			else 																							  sensor_state = true;
+		}
+		// DISTANCE: Disable 	LIGHT: Disable
 		else
 		{
 			sensor_state = false;
@@ -257,33 +314,35 @@ void main(void)
 		set_led(sensor_state);
 		set_out(sensor_state);
 
-		sprintf(nus_buffer, "%cD%3d/%3dL%4d/%4d", sensor_state? '1' : '0', distance, settings_distance_cm, light, settings_light_desinty); 
-		// for (int i = 0 ; i < 25 ; i++)
-		// {
-		// 	nus_buffer[i] = i + 48;
-		// }
+
+		LOG_INF("STATE: %d distance: %4dcm max: %4dcm || light: %4d max: %4d", sensor_state, distance, settings.threshold_distance, light, settings.threshold_light_intensity); 
+
 		if ( connection_state )
 		{
-			//if (bt_nus_send(NULL, nus_buffer, 20) )
-			if (bt_nus_send(NULL, nus_buffer, strlen(nus_buffer))) 
+			nus_buffer[0] = settings.enable_distance;
+			nus_buffer[1] = settings.enable_light_intensity;
+			nus_buffer[2] = sensor_state;
+			nus_buffer[3] = (uint8_t)( distance >> 8 );
+			nus_buffer[4] = (uint8_t)( distance );
+			nus_buffer[5] = (uint8_t)( light >> 8 );
+			nus_buffer[6] = (uint8_t)( light );
+
+			if ( bt_nus_send(NULL, nus_buffer, strlen(nus_buffer) ) ) 
 			{
 			//	LOG_WRN("Failed to send data over BLE connection");
 			}
 		}
 
-		if ( save_setting_distance_flag )
+		if ( save_setting_flag )
 		{
-			save_setting_distance_flag = false;
-			(void)nvs_write(&fs, SETTINGS_DISTANCE_ID, &settings_distance_cm, strlen(settings_distance_cm));
-		}
-
-		if ( save_setting_light_flag )
-		{
-			save_setting_light_flag = false;
-			(void)nvs_write(&fs, SETTINGS_LIGHT_ID, &settings_light_desinty, strlen(settings_light_desinty));
+			save_setting_flag = false;
+			(void)nvs_write(&fs, SETTINGS_DISTANCE_ID, 		  &settings.threshold_distance, 		sizeof(settings.threshold_distance));
+			(void)nvs_write(&fs, SETTINGS_LIGHT_ID, 		  &settings.threshold_light_intensity, 	sizeof(settings.threshold_light_intensity));
+			(void)nvs_write(&fs, SETTINGS_DISTANCE_ENABLE_ID, &settings.enable_distance, 			sizeof(settings.enable_distance));
+			(void)nvs_write(&fs, SETTINGS_LIGHT_ENABLE_ID, 	  &settings.enable_light_intensity, 	sizeof(settings.enable_light_intensity));
 		}
 
 
-		k_msleep(50);
+		k_msleep(20);
 	}
 }
