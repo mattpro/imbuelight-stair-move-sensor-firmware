@@ -24,7 +24,7 @@ static struct bt_data ad[] = {
 	BT_DATA(BT_DATA_NAME_COMPLETE, DEVICE_NAME, DEVICE_NAME_LEN),
 };
 
-uint8_t nus_buffer[10];
+uint8_t nus_buffer[13];
 uint16_t distance = 0;
 int16_t light = 0;
 bool sensor_state = false;
@@ -194,8 +194,15 @@ void main(void)
 		}
 		set_out(sensor_state);
 
-
-		//LOG_INF("STATE: %d distance: %4dcm max: %4dcm || light: %4d max: %4d", sensor_state, distance, settings.threshold_distance, light, settings.threshold_light_intensity); 
+		#if 1
+		static uint8_t counter;
+		counter ++;
+		if ( counter > 5 )
+		{
+			counter = 0;
+			printk("STATE: %d distance: %4dcm max: %4dcm || light: %4d max: %4d\r\n", sensor_state, distance, settings.threshold_distance, light, settings.threshold_light_intensity);
+		}
+		#endif
 
 		if ( connection_state )
 		{
@@ -213,7 +220,9 @@ void main(void)
 			nus_buffer[10] = (uint8_t)(settings.threshold_light_intensity >> 8);
 			nus_buffer[11] = (uint8_t)(settings.threshold_light_intensity);
 
-			if ( bt_nus_send(NULL, nus_buffer, strlen(nus_buffer) ) ) 
+			nus_buffer[12] = (uint8_t)(FIRMWARE_VERSION);
+
+			if ( bt_nus_send(NULL, nus_buffer, 13 ) ) 
 			{
 			//	LOG_WRN("Failed to send data over BLE connection");
 			}
