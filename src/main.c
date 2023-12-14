@@ -50,8 +50,9 @@ static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data, uint1
 
 	settings.enable_distance 			= data[0] > 0 ? true : false;
 	settings.enable_light_intensity 	= data[1] > 0 ? true : false;
-	settings.threshold_distance     	= (uint16_t)((data[2] >> 8 ) | data[3] );
-	settings.threshold_light_intensity	= (uint16_t)((data[4] >> 8 ) | data[5] );
+	settings.enable_led_signalization   = data[2] > 0 ? true : false;
+	settings.threshold_distance     	= (uint16_t)(((uint16_t)data[3] << 8 ) | data[4] );
+	settings.threshold_light_intensity	= (uint16_t)(((uint16_t)data[5] << 8 ) | data[6] );
 
 	save_setting_flag = true; 
 	

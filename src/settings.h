@@ -32,7 +32,7 @@
 extern struct settings_t settings;
 
 struct settings_t{
-	uint8_t threshold_distance;
+	uint16_t threshold_distance;
 	int16_t threshold_light_intensity;
 	bool 	enable_distance;
 	bool 	enable_light_intensity;
