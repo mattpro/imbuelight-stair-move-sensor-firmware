@@ -2,6 +2,7 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/sensor.h>
+#include <stdio.h>
 #include "utils.h"
 #include "adc.h"
 #include "distance_sensor.h"
@@ -26,6 +27,7 @@ static struct bt_data ad[] = {
 
 uint8_t nus_buffer[13];
 uint16_t distance = 0;
+uint16_t new_distance = 0;
 int16_t light = 0;
 bool sensor_state = false;
 bool connection_state = false;
@@ -36,7 +38,6 @@ bool led_state = false;
 
 static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data, uint16_t len)
 {
-	int err;
 	char addr[BT_ADDR_LE_STR_LEN] = {0};
 
 	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, ARRAY_SIZE(addr));
@@ -127,22 +128,29 @@ static void bt_ready(int err)
 	if (err) 
 	{
 		LOG_ERR("Failed to initialize UART service (err: %d)", err);
-		return 0;
+		return;
 	}
 
 	err = bt_le_adv_start(BT_LE_ADV_CONN, ad, ARRAY_SIZE(ad), NULL, 0);
 	if (err) 
 	{
 		LOG_INF("Advertising failed to start (err %d)\n", err);
-		return 0;
+		return;
 	}
 }
+
 
 void main(void)
 {	
 	int err;
 
-	LOG_INF("Imbue light move controller ver 1.0 start");
+    LOG_INF("##############################"); 
+    LOG_INF("##       Imbue Light        ##");
+	LOG_INF("##     Move Controller      ##");
+	LOG_INF("##        ver 1.1           ##");
+    LOG_INF("##   %s %s   ##", __DATE__, __TIME__);
+    LOG_INF("##############################\n");
+
 	led_init();
 	led_start();
 	out_init();
@@ -154,7 +162,6 @@ void main(void)
 	if (err) 
 	{
 		LOG_INF("Bluetooth init failed (err %d)\n", err);
-		return 0;
 	}
 
 	SETTINGS_init();
@@ -164,7 +171,11 @@ void main(void)
 	
 	while (1) 
 	{
-		distance = get_distance();
+		new_distance = get_distance();
+		if (new_distance < 300 )
+		{
+			distance = new_distance;
+		}
 		light = get_light_intensity();
 
 		// DISTANCE: Enable 	LIGHT: Disable
@@ -201,7 +212,7 @@ void main(void)
 		if ( counter > 5 )
 		{
 			counter = 0;
-			printk("STATE: %d distance: %4dcm max: %4dcm || light: %4d max: %4d\r\n", sensor_state, distance, settings.threshold_distance, light, settings.threshold_light_intensity);
+			LOG_INF("STATE: %d distance: %4dcm max: %4dcm || light: %4d max: %4d", sensor_state, distance, settings.threshold_distance, light, settings.threshold_light_intensity);
 		}
 		#endif
 
@@ -216,10 +227,10 @@ void main(void)
 			nus_buffer[5]  = (uint8_t)settings.enable_distance;
 			nus_buffer[6]  = (uint8_t)settings.enable_light_intensity;
 			nus_buffer[7]  = (uint8_t)settings.enable_led_signalization;
-			nus_buffer[8]  = (uint8_t)(settings.threshold_distance >> 8);
-			nus_buffer[9]  = (uint8_t)(settings.threshold_distance);
-			nus_buffer[10] = (uint8_t)(settings.threshold_light_intensity >> 8);
-			nus_buffer[11] = (uint8_t)(settings.threshold_light_intensity);
+			nus_buffer[8]  = (uint8_t)( settings.threshold_distance >> 8 );
+			nus_buffer[9]  = (uint8_t)( settings.threshold_distance );
+			nus_buffer[10] = (uint8_t)( settings.threshold_light_intensity >> 8 );
+			nus_buffer[11] = (uint8_t)( settings.threshold_light_intensity );
 
 			nus_buffer[12] = (uint8_t)(FIRMWARE_VERSION);
 
@@ -228,10 +239,16 @@ void main(void)
 			//	LOG_WRN("Failed to send data over BLE connection");
 			}
 
-			led_state = led_state ^ true;
-			if ( ( sensor_state == false ) && ( settings.enable_led_signalization ) )
+			static uint8_t counter_led_connection;
+			counter_led_connection ++;
+			if ( counter_led_connection > 5 )
 			{
-				set_led(led_state);
+				counter_led_connection = 0;
+				led_state = led_state ^ true;
+				if ( ( sensor_state == false ) && ( settings.enable_led_signalization ) )
+				{
+					set_led(led_state);
+				}
 			}
 		}
 
@@ -241,6 +258,6 @@ void main(void)
 			SETTINGS_load();
 		}
 
-		k_msleep(20);
+		//k_msleep(50);
 	}
 }

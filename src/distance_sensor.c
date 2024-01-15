@@ -17,16 +17,21 @@ int distance_sensor_init(void)
 		printk("%s: device not ready.\n", tof_dev->name);
 		return 0;
 	}
+	return 1;
 }
 
 
 uint16_t get_distance(void)
 {
 	uint16_t distance;
+	int err1, err2;
 
-	sensor_sample_fetch(tof_dev);
-	sensor_channel_get(tof_dev, SENSOR_CHAN_DISTANCE, &prox);
+	err1 = sensor_sample_fetch(tof_dev);
+
+	err2 = sensor_channel_get(tof_dev, SENSOR_CHAN_DISTANCE, &prox);
 	distance = prox.val1 * 100 + prox.val2/10000;
+
+	//LOG_INF("Err1=%d Err2=%d Dis=%d", err1, err2, distance);
 
 	return distance;
 }

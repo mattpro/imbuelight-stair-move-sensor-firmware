@@ -18,9 +18,10 @@ void adc_init(void)
 
 	err_code = nrfx_saadc_init(NRFX_SAADC_DEFAULT_CONFIG_IRQ_PRIORITY);
 	err_code = nrfx_saadc_channels_config(&channel, 2);
-	err_code = nrfx_saadc_simple_mode_set((1 << 0) | (1 << 1 ),
+	uint32_t channels_mask = nrfx_saadc_channels_configured_get();
+	err_code = nrfx_saadc_simple_mode_set(channels_mask,
 										  NRF_SAADC_RESOLUTION_12BIT,
-										  NRF_SAADC_OVERSAMPLE_16X,
+										  NRF_SAADC_OVERSAMPLE_2X,
 										  NULL);
 	err_code = nrfx_saadc_buffer_set(samples, 2);
 }
@@ -36,5 +37,3 @@ int16_t get_light_intensity(void)
 
     return light;
 }
-
-

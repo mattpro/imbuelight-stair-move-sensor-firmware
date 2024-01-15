@@ -9,7 +9,7 @@
 #include <zephyr/fs/nvs.h>
 
 
-#define FIRMWARE_VERSION 							01 // means 0.1	
+#define FIRMWARE_VERSION 							02 // means 0.2	
 
 #define DEFAULT_SETTINGS_THRESHOLD_DISTANCE 		80
 #define DEFAULT_SETTINGS_THRESHOLD_LIGHT_INTENSITY 	200

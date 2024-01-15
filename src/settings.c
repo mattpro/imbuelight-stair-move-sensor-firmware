@@ -116,10 +116,11 @@ void SETTINGS_load(void)
 	}
 
 	LOG_INF("SETTINGS light enable				= %d", settings.enable_light_intensity);
-	LOG_INF("SETTINGS distance enable 			= %d", settings.enable_distance);
+	LOG_INF("SETTINGS distance enable 			= %d", settings.enable_distance);	
+	LOG_INF("SETTINGS led sig enable 			= %d", settings.enable_led_signalization);
 	LOG_INF("SETTINGS threshold_light_intensity	= %d", settings.threshold_light_intensity);
 	LOG_INF("SETTINGS threshold_distance 		= %d", settings.threshold_distance);
-	LOG_INF("SETTINGS led sig enable 			= %d", settings.enable_led_signalization);
+
 }
 
 
