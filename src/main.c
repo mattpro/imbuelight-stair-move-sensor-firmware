@@ -26,15 +26,16 @@ static struct bt_data ad[] = {
 };
 
 uint8_t nus_buffer[13];
-uint16_t distance = 0;
+uint16_t distance = 200;
+uint8_t distance_err = 0;
 uint16_t new_distance = 0;
-int16_t light = 0;
+int16_t light = 2000;
 bool sensor_state = false;
 bool connection_state = false;
 bool save_setting_flag = false;
 bool ble_connected_flag = false;
 bool led_state = false;
-
+static uint8_t counter_led_connection = 0;
 
 static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data, uint16_t len)
 {
@@ -49,7 +50,7 @@ static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data, uint1
 		return;
 	}
 
-	settings.enable_distance 		= data[0] > 0 ? true : false;
+	settings.enable_distance 			= data[0] > 0 ? true : false;
 	settings.enable_light_intensity 	= data[1] > 0 ? true : false;
 	settings.enable_led_signalization	= data[2] > 0 ? true : false;
 	settings.threshold_distance     	= (uint16_t)(((uint16_t)data[3] << 8 ) | data[4] );
@@ -144,12 +145,12 @@ void main(void)
 {	
 	int err;
 
-    	LOG_INF("##############################"); 
-    	LOG_INF("##       Imbue Light        ##");
-	LOG_INF("##     Move Controller      ##");
+    LOG_INF("##############################"); 
+    LOG_INF("##       Imbue Light        ##");
+	LOG_INF("##     Move Controller      ##");	
 	LOG_INF("##        ver 1.1           ##");
-    	LOG_INF("##   %s %s   ##", __DATE__, __TIME__);
-    	LOG_INF("##############################\n");
+    LOG_INF("##   %s %s   ##", __DATE__, __TIME__);
+    LOG_INF("##############################\n");
 
 	led_init();
 	led_start();
@@ -172,11 +173,13 @@ void main(void)
 	while (1) 
 	{
 		new_distance = get_distance();
-		if (new_distance < 300 )
+		distance_err = 1;
+		if ( ( new_distance < 300 ) && ( new_distance != 0 ) )
 		{
+			distance_err = 0;
 			distance = new_distance;
 		}
-		light = get_light_intensity();
+		light = 0.2 * get_light_intensity() + 0.8 * light;
 
 		// DISTANCE: Enable 	LIGHT: Disable
 		if ( ( settings.enable_distance == true ) && ( settings.enable_light_intensity == false ) )
@@ -200,20 +203,17 @@ void main(void)
 			sensor_state = false;
 		}
 
-		if ( settings.enable_led_signalization )
-		{
-			set_led(sensor_state);
-		}
+
 		set_out(sensor_state);
 
 		#if 1
-		static uint8_t counter;
-		counter ++;
-		if ( counter > 5 )
-		{
-			counter = 0;
-			LOG_INF("STATE: %d distance: %4dcm max: %4dcm || light: %4d max: %4d", sensor_state, distance, settings.threshold_distance, light, settings.threshold_light_intensity);
-		}
+		//static uint8_t counter;
+		//counter ++;
+		//if ( counter > 5 )
+		//{
+		//	counter = 0;
+			LOG_INF("STATE: %d ERR:%d distance: %4dcm max: %4dcm || light: %4d max: %4d", sensor_state, distance_err, distance, settings.threshold_distance, light, settings.threshold_light_intensity);
+		//}
 		#endif
 
 		if ( connection_state )
@@ -239,16 +239,25 @@ void main(void)
 			//	LOG_WRN("Failed to send data over BLE connection");
 			}
 
-			static uint8_t counter_led_connection;
-			counter_led_connection ++;
-			if ( counter_led_connection > 5 )
+			if ( settings.enable_led_signalization )
 			{
-				counter_led_connection = 0;
-				led_state = led_state ^ true;
-				if ( ( sensor_state == false ) && ( settings.enable_led_signalization ) )
+				counter_led_connection ++;
+				if ( counter_led_connection > 5 )
 				{
-					set_led(led_state);
+					counter_led_connection = 0;
+					led_state = led_state ^ true;
+					if ( sensor_state == false )
+					{
+						set_led(led_state);
+					}
 				}
+			}
+		}
+		else
+		{
+			if ( settings.enable_led_signalization )
+			{
+				set_led(sensor_state);
 			}
 		}
 

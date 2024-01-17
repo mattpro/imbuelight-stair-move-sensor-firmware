@@ -21,7 +21,7 @@ void adc_init(void)
 	uint32_t channels_mask = nrfx_saadc_channels_configured_get();
 	err_code = nrfx_saadc_simple_mode_set(channels_mask,
 										  NRF_SAADC_RESOLUTION_12BIT,
-										  NRF_SAADC_OVERSAMPLE_2X,
+										  NRF_SAADC_OVERSAMPLE_256X,
 										  NULL);
 	err_code = nrfx_saadc_buffer_set(samples, 2);
 }
