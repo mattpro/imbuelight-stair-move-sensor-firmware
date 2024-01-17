@@ -255,7 +255,7 @@ void main(void)
 		if ( save_setting_flag )
 		{
 			save_setting_flag = false;
-			SETTINGS_load();
+			SETTINGS_save();
 		}
 
 		//k_msleep(50);

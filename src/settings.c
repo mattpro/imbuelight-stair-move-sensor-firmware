@@ -126,6 +126,7 @@ void SETTINGS_load(void)
 
 void SETTINGS_save(void)
 {
+	LOG_INF("SAVE SETTINGS !");
 	(void)nvs_write(&fs, SETTINGS_DISTANCE_ID, 		  	&settings.threshold_distance, 			sizeof(settings.threshold_distance));
 	(void)nvs_write(&fs, SETTINGS_LIGHT_ID, 		  	&settings.threshold_light_intensity, 	sizeof(settings.threshold_light_intensity));
 	(void)nvs_write(&fs, SETTINGS_DISTANCE_ENABLE_ID, 	&settings.enable_distance, 				sizeof(settings.enable_distance));
