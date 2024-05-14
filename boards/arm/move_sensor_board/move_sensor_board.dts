@@ -38,6 +38,11 @@
 	status = "okay";
 };
 
+&gpiote {
+	status = "okay";
+};
+
+
 &pinctrl {
 	i2c0_default: i2c0_default {
 		group1 {
@@ -60,11 +65,11 @@
 	pinctrl-1 = <&i2c0_sleep>;
 	pinctrl-names = "default", "sleep";
 	clock-frequency = <I2C_BITRATE_FAST>;
-	vl53l0x@29 {
-		compatible = "st,vl53l0x";
-		reg = <0x29>;
-		xshut-gpios = <&gpio0 16 GPIO_ACTIVE_HIGH>;
-	};
+	// vl53l0x@29 {
+	// 	compatible = "st,vl53l0x";
+	// 	reg = <0x29>;
+	// 	xshut-gpios = <&gpio0 16 GPIO_ACTIVE_HIGH>;
+	// };
 };
 
 

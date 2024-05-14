@@ -1,6 +1,7 @@
 {
     "files.associations": {
-        "distance_sensor.h": "c"
+        "distance_sensor.h": "c",
+        "i2c.h": "c"
     },
     "C_Cpp.configurationWarnings": "disabled"
 }
