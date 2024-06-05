@@ -34,6 +34,8 @@ void led_start(void)
         gpio_pin_toggle_dt(&led);
 		k_msleep(25);
     }
+
+	gpio_pin_set_dt(&led, 0);
 }
 
 

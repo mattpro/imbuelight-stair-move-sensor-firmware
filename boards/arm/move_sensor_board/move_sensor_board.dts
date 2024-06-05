@@ -27,10 +27,19 @@
 		};
 	};
 
+	buttons {
+		compatible = "gpio-keys";
+		irsensorint: ir_sensor_int {
+			gpios = <&gpio0 18 GPIO_ACTIVE_LOW>;
+			label = "Interupt ";
+		};
+	};
+
 	aliases {
 		led0 = &led0;
 		out0 = &out0;
 		i2c0 = &i2c0;
+		irsensorint = &irsensorint;
 	};
 };
 
@@ -46,13 +55,13 @@
 &pinctrl {
 	i2c0_default: i2c0_default {
 		group1 {
-			psels = <NRF_PSEL(TWIM_SDA, 0, 0)>, <NRF_PSEL(TWIM_SCL, 0, 1)>;
+			psels = <NRF_PSEL(TWIM_SDA, 0, 1)>, <NRF_PSEL(TWIM_SCL, 0, 0)>;
 		};
 	};
 
 	i2c0_sleep: i2c0_sleep {
 		group1 {
-			psels = <NRF_PSEL(TWIM_SDA, 0, 0)>, <NRF_PSEL(TWIM_SCL, 0, 1)>;
+			psels = <NRF_PSEL(TWIM_SDA, 0, 1)>, <NRF_PSEL(TWIM_SCL, 0, 0)>;
 			low-power-enable;
 		};
 	};

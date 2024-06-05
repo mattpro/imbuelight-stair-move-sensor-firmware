@@ -1,7 +1,9 @@
 {
     "files.associations": {
         "distance_sensor.h": "c",
-        "i2c.h": "c"
+        "i2c.h": "c",
+        "kernel.h": "c",
+        "flash_map.h": "c"
     },
     "C_Cpp.configurationWarnings": "disabled"
 }
