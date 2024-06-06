@@ -32,13 +32,13 @@ void SETTINGS_init(void)
 	fs.flash_device = NVS_PARTITION_DEVICE;
 	if (!device_is_ready(fs.flash_device)) {
 		printk("Flash device %s is not ready\n", fs.flash_device->name);
-		return 0;
+		return;
 	}
 	fs.offset = NVS_PARTITION_OFFSET;
 	rc = flash_get_page_info_by_offs(fs.flash_device, fs.offset, &info);
 	if (rc) {
 		printk("Unable to get page info\n");
-		return 0;
+		return;
 	}
 	fs.sector_size = info.size;
 	fs.sector_count = 3U;
@@ -46,7 +46,7 @@ void SETTINGS_init(void)
 	rc = nvs_mount(&fs);
 	if (rc) {
 		printk("Flash Init failed\n");
-		return 0;
+		return;
 	}
 }
 
@@ -58,19 +58,19 @@ void SETTINGS_load(void)
 	rc = nvs_read(&fs, SETTINGS_PRESENCE_ID, &settings.threshold_presence, sizeof(settings.threshold_presence));
 	if (rc > 0) 
 	{ /* item was found, show it */
-		LOG_INF("Id: %d, Address: %s\n", SETTINGS_PRESENCE_ID, settings.threshold_presence);
+		LOG_INF("Id: %d", SETTINGS_PRESENCE_ID);
 	} 
 	else   
 	{/* item was not found, add it */
 		settings.threshold_presence = DEFAULT_SETTINGS_THRESHOLD_PRESENCE;
-		LOG_WRN("No settings found, set default %d cm", settings.threshold_presence);
+		LOG_WRN("No settings found, set default %d", settings.threshold_presence);
 		(void)nvs_write(&fs, SETTINGS_PRESENCE_ID, &settings.threshold_presence, sizeof(settings.threshold_presence));
 	}
 
 	rc = nvs_read(&fs, SETTINGS_LIGHT_ID, &settings.threshold_light_intensity, sizeof(settings.threshold_light_intensity));
 	if (rc > 0) 
 	{ /* item was found, show it */
-		LOG_INF("Id: %d, Address: %s\n", SETTINGS_LIGHT_ID, settings.threshold_light_intensity);
+		LOG_INF("Id: %d", SETTINGS_LIGHT_ID);
 	} 
 	else   
 	{/* item was not found, add it */
@@ -82,7 +82,7 @@ void SETTINGS_load(void)
 	rc = nvs_read(&fs, SETTINGS_PRESENCE_ENABLE_ID, &settings.enable_presence, sizeof(settings.enable_presence));
 	if (rc > 0) 
 	{ /* item was found, show it */
-		LOG_INF("Id: %d, Address: %s\n", SETTINGS_PRESENCE_ENABLE_ID, settings.enable_presence);
+		LOG_INF("Id: %d", SETTINGS_PRESENCE_ENABLE_ID);
 	} 
 	else   
 	{/* item was not found, add it */
@@ -94,7 +94,7 @@ void SETTINGS_load(void)
 	rc = nvs_read(&fs, SETTINGS_LIGHT_ENABLE_ID, &settings.enable_light_intensity, sizeof(settings.enable_light_intensity));
 	if (rc > 0) 
 	{ /* item was found, show it */
-		LOG_INF("Id: %d, Address: %s\n", SETTINGS_LIGHT_ENABLE_ID, settings.enable_light_intensity);
+		LOG_INF("Id: %d", SETTINGS_LIGHT_ENABLE_ID);
 	} 
 	else   
 	{/* item was not found, add it */
@@ -106,7 +106,7 @@ void SETTINGS_load(void)
 	rc = nvs_read(&fs, SETTINGS_LED_SIGNALIZATION_ID, &settings.enable_led_signalization, sizeof(settings.enable_led_signalization));
 	if (rc > 0) 
 	{ /* item was found, show it */
-		LOG_INF("Id: %d, Address: %s\n", DEFAULT_SETTINGS_ENABLE_LED_SIGNALIZATION, settings.enable_led_signalization);
+		LOG_INF("Id: %d", DEFAULT_SETTINGS_ENABLE_LED_SIGNALIZATION);
 	} 
 	else   
 	{/* item was not found, add it */

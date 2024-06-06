@@ -6,12 +6,12 @@
 
 extern const struct device *dev_led;
 
-void led_init(void);
-void led_start(void);
-void set_led(int state);
+void LED_init(void);
+void LED_start(void);
+void LED_set(int state);
 
 
-void out_init(void);
-void set_out(int state);
+void OUT_init(void);
+void OUT_set(int state);
 
 #endif

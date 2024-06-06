@@ -29,6 +29,12 @@
 #define SETTINGS_LED_SIGNALIZATION_ID	5
 
 
+extern uint16_t current_light;
+extern bool light_state;
+extern bool present_state;
+extern bool new_sensor_state;
+extern bool sensor_state;
+
 extern struct settings_t settings;
 
 struct settings_t{

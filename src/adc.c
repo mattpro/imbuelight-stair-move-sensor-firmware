@@ -1,5 +1,7 @@
 #include <zephyr/kernel.h>
 #include <nrfx_saadc.h>
+#include "settings.h"
+#include "utils.h"
 #include "adc.h"
 
 #include <zephyr/logging/log.h>
@@ -16,17 +18,40 @@ static struct k_timer adc_timer;
 
 
 
-static void adc_handler(struct k_work *work)
+static void adc_handler(struct k_timer *timer_id)
 {
-	uint16_t light = 0;
+	current_light = ADC_get_light_intensity();
+	//LOG_INF("Light: %d", current_light);
 
-	light = get_light_intensity();
+	if ( settings.enable_light_intensity == true ) 
+	{
+		light_state = current_light < settings.threshold_light_intensity ? true : false;
+	}
+	else
+	{
+		light_state = false;
+	}
 
-	LOG_INF("Light: %d", light);
+	// Tylko jeśli wyjście czujnika jest zależne tylko od światła
+	if ( ( settings.enable_light_intensity == true ) && ( settings.enable_presence == false ) )
+	{
+		new_sensor_state = light_state | present_state;
+		if ( new_sensor_state != sensor_state)
+		{
+			sensor_state = new_sensor_state;
+			LOG_INF("NEW SENSOR STATE (light): %d", sensor_state);
+			if ( settings.enable_led_signalization )
+			{
+				LED_set(sensor_state);
+			}
+			OUT_set(sensor_state);
+		}
+	}
+
 }
 
 
-void adc_init(void)
+void ADC_init(void)
 {
 	nrfx_err_t err_code;
 
@@ -44,7 +69,7 @@ void adc_init(void)
 }
 
 
-uint16_t get_light_intensity(void)
+uint16_t ADC_get_light_intensity(void)
 {
     uint16_t light;
     nrfx_err_t err_code;

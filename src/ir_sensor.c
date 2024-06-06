@@ -4,6 +4,8 @@
 
 
 #include "sths34pf80_reg.h"
+#include "settings.h"
+#include "utils.h"
 #include "ir_sensor.h"
 
 #include <zephyr/logging/log.h>
@@ -28,68 +30,41 @@ static int32_t platform_write(void *handle, uint8_t Reg, const uint8_t *Bufp, ui
 static int32_t platform_read(void *handle, uint8_t Reg, uint8_t *Bufp, uint16_t len);
 static void platform_delay(uint32_t ms);
 
-extern void ir_sensor_detect_work_handler(struct k_work *work);
-K_WORK_DEFINE(ir_sensor_detect_work, ir_sensor_detect_work_handler);
-
 
 
 void irsensor_int_cb(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
 {
-	LOG_INF("IR Sensor interupt %" PRIu32, k_cycle_get_32());
 	int gpio_state = 0;
 
 	gpio_state = gpio_pin_get_dt(&ir_sensor_int);
-	LOG_INF("Status: %02x", gpio_state);
+	LOG_INF("Status: %02x", !gpio_state);
 
-	if ( gpio_state == 1 )
+	if ( settings.enable_presence == true )
 	{
-		set_led(0);
-		set_out(0);
+		present_state = !gpio_state;
 	}
 	else
 	{
-		set_led(1);
-		set_out(1);
+		present_state = false;
 	}
 
- //	k_work_submit(&ir_sensor_detect_work);
+	// Steruj wyjściem gdy czujnik ruchu jest włączony 
+	if  ( settings.enable_presence == true ) 
+	{
+		new_sensor_state = light_state | present_state;
+		if ( new_sensor_state != sensor_state)
+		{
+			sensor_state = new_sensor_state;
+			LOG_INF("NEW SENSOR STATE (presence): %d", sensor_state);
+			if ( settings.enable_led_signalization )
+			{
+				LED_set(sensor_state);
+			}
+			
+			OUT_set(sensor_state);
+		}
+	}
 }
-
-
-
-void ir_sensor_detect_work_handler(struct k_work *work)
-{
-	uint16_t raw;
-	static uint32_t cnt = 0;
-
-	int gpio_state = 0;
-
-
-	gpio_state = gpio_pin_get_dt(&ir_sensor_int);
-	LOG_INF("Status: %02x", gpio_state);
-
-
-	set_led(gpio_state);
-	set_out(gpio_state);
-
-	// sths34pf80_drdy_status_get(&ir_sensor, &status);
- 	// LOG_INF("Status: %02x", status.drdy);
-
- 	// if (status.drdy)
-	// {
- 	//  	sths34pf80_func_status_get(&ir_sensor, &func_status);
-	//  	sths34pf80_tobject_raw_get(&ir_sensor, &raw);
- 	//  	if ((cnt++ % 30) == 0)
- 	//  	{
- 	//  		LOG_INF("-->TA %d - P %d - M %d RAW: %d", func_status.tamb_shock_flag, func_status.pres_flag, func_status.mot_flag, raw);
- 	//  	}
-	// 	set_led(func_status.pres_flag);
-	// 	set_out(func_status.pres_flag);
- 	// }
-}
-
-
-
 
 
 int IR_SENSOR_init(void)
@@ -140,7 +115,6 @@ int IR_SENSOR_init(void)
 	LOG_INF("Set up button at %s pin %d", ir_sensor_int.port->name, ir_sensor_int.pin);
 
 
-
 	/* Wait sensor boot time */
 	platform_delay(BOOT_TIME);
 
@@ -173,12 +147,21 @@ int IR_SENSOR_init(void)
 	/* Set intreupt */
 	sths34pf80_int_or_set(&ir_sensor, STHS34PF80_INT_PRESENCE);
 	sths34pf80_route_int_set(&ir_sensor, STHS34PF80_INT_OR);
-
-	sths34pf80_presence_threshold_set(&ir_sensor, 350); // less - more sensitve
-
+	/* Set threshold from settings */
+	sths34pf80_presence_threshold_set(&ir_sensor, settings.threshold_presence); // less - more sensitve
 	/* Set ODR */
 	sths34pf80_odr_set(&ir_sensor, STHS34PF80_ODR_AT_30Hz);
+
+	return 1;
 }
+
+
+void IR_SENSOR_set_new_threshold(uint16_t threshold)
+{
+	sths34pf80_presence_threshold_set(&ir_sensor, threshold); 
+}
+
+
 
 
 static int32_t platform_write(void *handle, uint8_t Reg, const uint8_t *Bufp, uint16_t len)

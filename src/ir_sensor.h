@@ -9,6 +9,6 @@
 #define    BOOT_TIME         10 //ms
 
 int IR_SENSOR_init(void);
-
+void IR_SENSOR_set_new_threshold(uint16_t threshold);
 
 #endif

@@ -13,7 +13,7 @@ static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED0_NODE, gpios);
 static const struct gpio_dt_spec out = GPIO_DT_SPEC_GET(OUT_NODE, gpios);
 
 
-void led_init(void)
+void LED_init(void)
 {
 	int ret;
 
@@ -25,10 +25,8 @@ void led_init(void)
 	ret = gpio_pin_configure_dt(&led, GPIO_OUTPUT_ACTIVE);
 }
 
-void led_start(void)
+void LED_start(void)
 {
-    bool led_is_on;
-
     for(int i = 0 ; i < 20 ; i ++ )
     {
         gpio_pin_toggle_dt(&led);
@@ -39,13 +37,13 @@ void led_start(void)
 }
 
 
-void set_led(int state)
+void LED_set(int state)
 {
     gpio_pin_set_dt(&led, state);
 }
 
 
-void out_init(void)
+void OUT_init(void)
 {
 	int ret;
 
@@ -63,7 +61,7 @@ void out_init(void)
 }
 
 
-void set_out(int state)
+void OUT_set(int state)
 {
     gpio_pin_set_dt(&out, state);
 }

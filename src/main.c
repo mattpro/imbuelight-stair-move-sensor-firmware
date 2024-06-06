@@ -26,13 +26,23 @@ static struct bt_data ad[] = {
 };
 
 uint8_t nus_buffer[13];
-int16_t light = 2000;
-bool sensor_state = false;
+
 bool connection_state = false;
 bool save_setting_flag = false;
 bool ble_connected_flag = false;
 bool led_state = false;
-static uint8_t counter_led_connection = 0;
+
+
+
+uint16_t current_light = 0;
+bool light_state = false;
+bool present_state = false;
+
+bool new_sensor_state = false;
+bool sensor_state = false;
+
+
+
 
 static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data, uint16_t len)
 {
@@ -52,6 +62,8 @@ static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data, uint1
 	settings.enable_led_signalization	= data[2] > 0 ? true : false;
 	settings.threshold_presence     	= (uint16_t)(((uint16_t)data[3] << 8 ) | data[4] );
 	settings.threshold_light_intensity	= (uint16_t)(((uint16_t)data[5] << 8 ) | data[6] );
+
+	IR_SENSOR_set_new_threshold( settings.threshold_presence );
 
 	save_setting_flag = true; 
 	
@@ -139,7 +151,7 @@ static void bt_ready(int err)
 
 
 
-void main(void)
+int main(void)
 {	
     LOG_INF("##############################"); 
     LOG_INF("##       Imbue Light        ##");
@@ -148,12 +160,13 @@ void main(void)
     LOG_INF("##   %s %s   ##", __DATE__, __TIME__);
     LOG_INF("##############################\n");
 
-	led_init();
-	led_start();
-	out_init();
-	adc_init();
+	LED_init();
+	OUT_init();
+	LED_start();
+	SETTINGS_init();
+	SETTINGS_load();
+	ADC_init();
 	IR_SENSOR_init();
-	led_start();
 
 	int err = bt_enable(bt_ready);
 	if (err) 
@@ -161,4 +174,5 @@ void main(void)
 		LOG_INF("Bluetooth init failed (err %d)\n", err);
 	}
 
+	return 0;
 }

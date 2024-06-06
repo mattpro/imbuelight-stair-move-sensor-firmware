@@ -4,8 +4,8 @@
 
 #include <zephyr/kernel.h>
 
-void adc_init(void);
-uint16_t get_light_intensity(void);
+void ADC_init(void);
+uint16_t ADC_get_light_intensity(void);
 
 
 #endif
