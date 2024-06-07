@@ -12,11 +12,11 @@
 LOG_MODULE_REGISTER(ir_sensor, CONFIG_LOG_DEFAULT_LEVEL);
 
 
-#define SW0_NODE		DT_ALIAS(irsensorint)
-#define I2C_DEV_NODE	DT_ALIAS(i2c0)
+#define IRSENSOR_INT_NODE	DT_ALIAS(irsensorint)
+#define I2C_DEV_NODE		DT_ALIAS(i2c0)
 
 
-static const struct gpio_dt_spec ir_sensor_int = GPIO_DT_SPEC_GET_OR(SW0_NODE, gpios, {0});
+static const struct gpio_dt_spec ir_sensor_int = GPIO_DT_SPEC_GET_OR(IRSENSOR_INT_NODE, gpios, {0});
 static const struct device *const i2c_dev = DEVICE_DT_GET(I2C_DEV_NODE);
 
 static struct gpio_callback irsensor_int_cb_data;
