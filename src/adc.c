@@ -9,11 +9,10 @@ LOG_MODULE_REGISTER(adc, CONFIG_LOG_DEFAULT_LEVEL);
 
 
 static volatile bool is_ready;
-static uint16_t samples[2];
+static int16_t samples[2];
 
 static const nrfx_saadc_channel_t channel[2] = {	NRFX_SAADC_DEFAULT_CHANNEL_SE(NRF_SAADC_INPUT_VDD,  0),
 									        		NRFX_SAADC_DEFAULT_CHANNEL_SE(NRF_SAADC_INPUT_AIN3, 1) };
-
 static struct k_timer adc_timer;
 
 
@@ -21,7 +20,6 @@ static struct k_timer adc_timer;
 static void adc_handler(struct k_timer *timer_id)
 {
 	current_light = ADC_get_light_intensity();
-	//LOG_INF("Light: %d", current_light);
 
 	if ( settings.enable_light_intensity == true ) 
 	{
@@ -29,17 +27,19 @@ static void adc_handler(struct k_timer *timer_id)
 	}
 	else
 	{
-		light_state = false;
+		light_state = true;
 	}
+
+	//LOG_INF("Light: %d State: %d", current_light, light_state);
 
 	// Tylko jeśli wyjście czujnika jest zależne tylko od światła
 	if ( ( settings.enable_light_intensity == true ) && ( settings.enable_presence == false ) )
 	{
-		new_sensor_state = light_state | present_state;
+		new_sensor_state = light_state & present_state;
 		if ( new_sensor_state != sensor_state)
 		{
 			sensor_state = new_sensor_state;
-			LOG_INF("NEW SENSOR STATE (light): %d", sensor_state);
+			LOG_WRN("NEW SENSOR STATE (light): %d", sensor_state);
 			if ( settings.enable_led_signalization )
 			{
 				LED_set(sensor_state);
@@ -69,9 +69,9 @@ void ADC_init(void)
 }
 
 
-uint16_t ADC_get_light_intensity(void)
+int16_t ADC_get_light_intensity(void)
 {
-    uint16_t light;
+    int16_t light;
     nrfx_err_t err_code;
 
 	err_code = nrfx_saadc_mode_trigger();

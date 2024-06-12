@@ -34,7 +34,7 @@ bool led_state = false;
 
 
 
-uint16_t current_light = 0;
+int16_t current_light = 0;
 bool light_state = false;
 bool present_state = false;
 
@@ -113,9 +113,6 @@ BT_CONN_CB_DEFINE(conn_callbacks) = {
 };
 
 
-
-	
-
 static void bt_ready(int err)
 {
 	uint8_t addr_s[3];
@@ -151,6 +148,8 @@ static void bt_ready(int err)
 
 
 
+int16_t ir_sensor_raw = 0;
+
 int main(void)
 {	
     LOG_INF("##############################"); 
@@ -165,6 +164,7 @@ int main(void)
 	LED_start();
 	SETTINGS_init();
 	SETTINGS_load();
+	SETTINGS_load_default();
 	ADC_init();
 	IR_SENSOR_init();
 
@@ -173,6 +173,15 @@ int main(void)
 	{
 		LOG_INF("Bluetooth init failed (err %d)\n", err);
 	}
+
+	while(1)
+	{
+		k_msleep(100);
+		
+		ir_sensor_raw = IR_SENSOR_get_raw();
+		LOG_INF("LIGHT raw: %4d state: %d MOV raw: %4d state %d", current_light, light_state, ir_sensor_raw, present_state);
+	}
+
 
 	return 0;
 }

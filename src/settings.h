@@ -12,9 +12,9 @@
 #define FIRMWARE_VERSION 							03 // means 0.3	
 
 #define DEFAULT_SETTINGS_THRESHOLD_PRESENCE 		350
-#define DEFAULT_SETTINGS_THRESHOLD_LIGHT_INTENSITY 	200
+#define DEFAULT_SETTINGS_THRESHOLD_LIGHT_INTENSITY 	300
 #define DEFAULT_SETTINGS_ENABLE_PRESENCE 			true
-#define DEFAULT_SETTINGS_ENABLE_LIGHT_INTENSITY 	false
+#define DEFAULT_SETTINGS_ENABLE_LIGHT_INTENSITY 	true
 #define DEFAULT_SETTINGS_ENABLE_LED_SIGNALIZATION 	true
 
 
@@ -29,7 +29,7 @@
 #define SETTINGS_LED_SIGNALIZATION_ID	5
 
 
-extern uint16_t current_light;
+extern int16_t current_light;
 extern bool light_state;
 extern bool present_state;
 extern bool new_sensor_state;

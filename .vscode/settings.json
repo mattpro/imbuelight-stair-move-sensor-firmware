@@ -5,7 +5,8 @@
         "kernel.h": "c",
         "flash_map.h": "c",
         "nus.h": "c",
-        "uuid.h": "c"
+        "uuid.h": "c",
+        "settings.h": "c"
     },
     "C_Cpp.configurationWarnings": "disabled"
 }

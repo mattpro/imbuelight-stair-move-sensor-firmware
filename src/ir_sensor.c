@@ -38,24 +38,26 @@ void irsensor_int_cb(const struct device *dev, struct gpio_callback *cb, uint32_
 
 	gpio_state = gpio_pin_get_dt(&ir_sensor_int);
 	LOG_INF("Status: %02x", !gpio_state);
-
+	
 	if ( settings.enable_presence == true )
 	{
 		present_state = !gpio_state;
 	}
 	else
 	{
-		present_state = false;
+		present_state = true;
 	}
+
+	LOG_INF("Light %d State %d", light_state, present_state);
 
 	// Steruj wyjściem gdy czujnik ruchu jest włączony 
 	if  ( settings.enable_presence == true ) 
 	{
-		new_sensor_state = light_state | present_state;
+		new_sensor_state = light_state & present_state;
 		if ( new_sensor_state != sensor_state)
 		{
 			sensor_state = new_sensor_state;
-			LOG_INF("NEW SENSOR STATE (presence): %d", sensor_state);
+			LOG_WRN("NEW SENSOR STATE (presence): %d", sensor_state);
 			if ( settings.enable_led_signalization )
 			{
 				LED_set(sensor_state);
@@ -161,7 +163,14 @@ void IR_SENSOR_set_new_threshold(uint16_t threshold)
 	sths34pf80_presence_threshold_set(&ir_sensor, threshold); 
 }
 
+int16_t IR_SENSOR_get_raw(void)
+{
+	int16_t raw;
 
+	sths34pf80_tobject_raw_get(&ir_sensor, &raw);
+
+	return raw;
+}
 
 
 static int32_t platform_write(void *handle, uint8_t Reg, const uint8_t *Bufp, uint16_t len)
