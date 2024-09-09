@@ -126,6 +126,12 @@ void SETTINGS_load(void)
 void SETTINGS_save(void)
 {
 	LOG_INF("SAVE SETTINGS !");
+	LOG_INF("SETTINGS light enable				= %d", settings.enable_light_intensity);
+	LOG_INF("SETTINGS presence enable 			= %d", settings.enable_presence);	
+	LOG_INF("SETTINGS led sig enable 			= %d", settings.enable_led_signalization);
+	LOG_INF("SETTINGS threshold_light_intensity	= %d", settings.threshold_light_intensity);
+	LOG_INF("SETTINGS threshold_prescence		= %d", settings.threshold_presence);
+
 	(void)nvs_write(&fs, SETTINGS_PRESENCE_ID, 		  	&settings.threshold_presence, 			sizeof(settings.threshold_presence));
 	(void)nvs_write(&fs, SETTINGS_LIGHT_ID, 		  	&settings.threshold_light_intensity, 	sizeof(settings.threshold_light_intensity));
 	(void)nvs_write(&fs, SETTINGS_PRESENCE_ENABLE_ID, 	&settings.enable_presence, 				sizeof(settings.enable_presence));

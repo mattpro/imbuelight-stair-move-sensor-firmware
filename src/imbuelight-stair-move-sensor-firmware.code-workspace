@@ -1,0 +1,21 @@
+{
+	"folders": [
+		{
+			"path": ".."
+		},
+		{
+			"path": "C:/ncs/v2.6.0"
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"distance_sensor.h": "c",
+			"i2c.h": "c",
+			"kernel.h": "c",
+			"flash_map.h": "c",
+			"nus.h": "c",
+			"uuid.h": "c",
+			"settings.h": "c"
+		}
+	}
+}
