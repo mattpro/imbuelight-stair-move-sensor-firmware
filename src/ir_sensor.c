@@ -139,15 +139,19 @@ int IR_SENSOR_init(void)
 	LOG_INF("lpf_m: %02d, lpf_p: %02d, lpf_p_m: %02d, lpf_a_t: %02d\r\n", lpf_m, lpf_p, lpf_p_m, lpf_a_t);
 	/* Set BDU */
 	sths34pf80_block_data_update_set(&ir_sensor, 1);	
-	/* Set intreupt */
-	sths34pf80_int_or_set(&ir_sensor, STHS34PF80_INT_PRESENCE);
-	sths34pf80_route_int_set(&ir_sensor, STHS34PF80_INT_OR);
+
 
 	sths34pf80_presence_abs_value_set(&ir_sensor, 1);
 	/* Set threshold from settings */
 	sths34pf80_presence_threshold_set(&ir_sensor, settings.presence_threshold); // less - more sensitve
+	sths34pf80_presence_hysteresis_set(&ir_sensor, 20); // more - more stable
+
+	// /* Set intreupt */
+	sths34pf80_int_or_set(&ir_sensor, STHS34PF80_INT_PRESENCE);
+	sths34pf80_route_int_set(&ir_sensor, STHS34PF80_INT_OR);
+
 	/* Set ODR */
-	sths34pf80_odr_set(&ir_sensor, STHS34PF80_ODR_AT_8Hz);
+	sths34pf80_odr_set(&ir_sensor, STHS34PF80_ODR_AT_30Hz);
 
 	return 1;
 }
@@ -176,8 +180,8 @@ int IR_SENSOR_get_all_raw_data(IR_SENSOR_raw_data_t* IR_SENSOR_raw_data)
 int16_t IR_SENSOR_get_raw(void)
 {
 	int16_t raw;
-
-	sths34pf80_tobject_raw_get(&ir_sensor, &raw);
+	sths34pf80_tobj_comp_raw_get(&ir_sensor, &raw);
+	//sths34pf80_tobject_raw_get(&ir_sensor, &raw);
 	return raw;
 }
 

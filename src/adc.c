@@ -45,6 +45,7 @@ void ADC_init(void)
 {
 	nrfx_err_t err_code;
 
+	LOG_INF("ADC init");
 	err_code = nrfx_saadc_init(NRFX_SAADC_DEFAULT_CONFIG_IRQ_PRIORITY);
 	err_code = nrfx_saadc_channels_config(channel, 2);
 	uint32_t channels_mask = nrfx_saadc_channels_configured_get();
@@ -56,6 +57,7 @@ void ADC_init(void)
 
 	k_timer_init(&adc_timer, adc_handler, NULL);
 	k_timer_start(&adc_timer, K_MSEC(100), K_MSEC(100) );
+	LOG_INF("ADC init done");
 }
 
 

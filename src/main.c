@@ -93,9 +93,9 @@ static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data, uint1
 
 			settings.led_signalization_src =  (enum led_signalization_src_t)data[11];
 
-			IR_SENSOR_reset();
-			IR_SENSOR_set_new_threshold( settings.presence_threshold );
 			
+			IR_SENSOR_set_new_threshold( settings.presence_threshold );
+			//IR_SENSOR_reset();
 			// TODO: Led signalization to indicate save settings
 
 			light_state_current = false;
@@ -291,7 +291,6 @@ int main(void)
 		{
 			//SETTINGS_save();
  			LED_save_signalization();
-			IR_SENSOR_init();
 			led_signalization_save_flag = false;
 		}
 
