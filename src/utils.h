@@ -10,6 +10,10 @@ void LED_init(void);
 void LED_start(void);
 void LED_set(int state);
 
+void LED_connected_signalization(void);
+void LED_disconnect_signalization(void);
+void LED_save_signalization(void);
+
 
 void OUT_init(void);
 void OUT_set(int state);

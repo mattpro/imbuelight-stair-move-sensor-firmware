@@ -6,7 +6,10 @@
         "flash_map.h": "c",
         "nus.h": "c",
         "uuid.h": "c",
-        "settings.h": "c"
+        "settings.h": "c",
+        "nvs.h": "c",
+        "gpio.h": "c",
+        "sths34pf80_reg.h": "c"
     },
     "C_Cpp.configurationWarnings": "disabled"
 }

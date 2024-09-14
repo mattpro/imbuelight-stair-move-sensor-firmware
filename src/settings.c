@@ -11,13 +11,36 @@ static struct nvs_fs fs;
 
 void SETTINGS_load_default(void)
 {
-	settings.threshold_presence 		= DEFAULT_SETTINGS_THRESHOLD_PRESENCE;
-	settings.threshold_light_intensity 	= DEFAULT_SETTINGS_THRESHOLD_LIGHT_INTENSITY;
-	settings.enable_presence 			= DEFAULT_SETTINGS_ENABLE_PRESENCE;
-	settings.enable_light_intensity 	= DEFAULT_SETTINGS_ENABLE_LIGHT_INTENSITY;
-	settings.enable_led_signalization 	= DEFAULT_SETTINGS_ENABLE_LED_SIGNALIZATION;
+    settings.presence_threshold 		= DEFAULT_SETTINGS_PRESENCE_THRESHOLD;
+    settings.presence_enable 			= DEFAULT_SETTINGS_PRESENCE_ENABLE;
+    settings.presence_out_invert 		= DEFAULT_SETTINGS_PRESENCE_OUT_INVERT;
+
+    settings.light_intensity_threshold 	= DEFAULT_SETTINGS_LIGHT_INTENSITY_THRESHOLD;
+    settings.light_intensity_enable 	= DEFAULT_SETTINGS_LIGHT_INTENSITY_ENABLE;
+    settings.light_intensity_out_invert = DEFAULT_SETTINGS_LIGHT_INTENSITY_OUT_INVERT;
+
+    settings.signal_out_logic_function 	= DEFAULT_SETTINGS_SIGNAL_OUT_LOGIC_FUNCTION;
+    settings.signal_out_invert 			= DEFAULT_SETTINGS_SIGNAL_OUT_INVERT;
+
+    settings.led_signalization_src 		= DEFAULT_SETTINGS_LED_SIGNALIZATION_SRC;
 }
 
+void SETTINGS_print_all(void)
+{
+	// Print all setting from settings struct
+	LOG_INF("SETTINGS light enable				= %d", settings.light_intensity_enable);
+	LOG_INF("SETTINGS threshold_light_intensity	= %d", settings.light_intensity_threshold);
+	LOG_INF("SETTINGS light_intensity_out_invert= %d", settings.light_intensity_out_invert);
+
+	LOG_INF("SETTINGS presence enable 			= %d", settings.presence_enable);
+	LOG_INF("SETTINGS threshold_prescence		= %d", settings.presence_threshold);
+	LOG_INF("SETTINGS presence_out_invert		= %d", settings.presence_out_invert);
+	
+	LOG_INF("SETTINGS signal_out_logic_function	= %d", settings.signal_out_logic_function);
+	LOG_INF("SETTINGS signal_out_invert			= %d", settings.signal_out_invert);
+
+	LOG_INF("SETTINGS led_signalization_src		= %d", settings.led_signalization_src);
+}
 
 void SETTINGS_init(void)
 {
@@ -55,80 +78,31 @@ void SETTINGS_load(void)
 {
 	int rc = 0;
 
-	rc = nvs_read(&fs, SETTINGS_PRESENCE_ID, &settings.threshold_presence, sizeof(settings.threshold_presence));
+	LOG_INF("LOAD SETTINGS !");
+	rc = nvs_read(&fs, SETTINGS_ID, &settings, sizeof(settings));
 	if (rc > 0) 
 	{ /* item was found, show it */
-		LOG_INF("Id: %d", SETTINGS_PRESENCE_ID);
+		LOG_INF("Id: %d", SETTINGS_ID);
 	} 
 	else   
 	{/* item was not found, add it */
-		settings.threshold_presence = DEFAULT_SETTINGS_THRESHOLD_PRESENCE;
-		LOG_WRN("No settings found, set default %d", settings.threshold_presence);
-		(void)nvs_write(&fs, SETTINGS_PRESENCE_ID, &settings.threshold_presence, sizeof(settings.threshold_presence));
+		SETTINGS_load_default();
+		LOG_WRN("No settings found, set default");
+		(void)nvs_write(&fs, SETTINGS_ID, &settings, sizeof(settings));
 	}
 
-	rc = nvs_read(&fs, SETTINGS_LIGHT_ID, &settings.threshold_light_intensity, sizeof(settings.threshold_light_intensity));
-	if (rc > 0) 
-	{ /* item was found, show it */
-		LOG_INF("Id: %d", SETTINGS_LIGHT_ID);
-	} 
-	else   
-	{/* item was not found, add it */
-		settings.threshold_light_intensity = DEFAULT_SETTINGS_THRESHOLD_LIGHT_INTENSITY;
-		LOG_WRN("No settings found, set default %d", settings.threshold_light_intensity);
-		(void)nvs_write(&fs, SETTINGS_LIGHT_ID, &settings.threshold_light_intensity, sizeof(settings.threshold_light_intensity));
-	}
-
-	rc = nvs_read(&fs, SETTINGS_PRESENCE_ENABLE_ID, &settings.enable_presence, sizeof(settings.enable_presence));
-	if (rc > 0) 
-	{ /* item was found, show it */
-		LOG_INF("Id: %d", SETTINGS_PRESENCE_ENABLE_ID);
-	} 
-	else   
-	{/* item was not found, add it */
-		settings.enable_presence = DEFAULT_SETTINGS_ENABLE_PRESENCE;
-		LOG_WRN("No settings found, set default %d", settings.enable_presence);
-		(void)nvs_write(&fs, SETTINGS_PRESENCE_ENABLE_ID, &settings.enable_presence, sizeof(settings.enable_presence));
-	}
-
-	rc = nvs_read(&fs, SETTINGS_LIGHT_ENABLE_ID, &settings.enable_light_intensity, sizeof(settings.enable_light_intensity));
-	if (rc > 0) 
-	{ /* item was found, show it */
-		LOG_INF("Id: %d", SETTINGS_LIGHT_ENABLE_ID);
-	} 
-	else   
-	{/* item was not found, add it */
-		settings.enable_light_intensity = DEFAULT_SETTINGS_ENABLE_LIGHT_INTENSITY;
-		LOG_WRN("No settings found, set default %d", settings.enable_light_intensity);
-		(void)nvs_write(&fs, SETTINGS_LIGHT_ENABLE_ID, &settings.enable_light_intensity, sizeof(settings.enable_light_intensity));
-	}
-
-	rc = nvs_read(&fs, SETTINGS_LED_SIGNALIZATION_ID, &settings.enable_led_signalization, sizeof(settings.enable_led_signalization));
-	if (rc > 0) 
-	{ /* item was found, show it */
-		LOG_INF("Id: %d", DEFAULT_SETTINGS_ENABLE_LED_SIGNALIZATION);
-	} 
-	else   
-	{/* item was not found, add it */
-		settings.enable_led_signalization = DEFAULT_SETTINGS_ENABLE_LED_SIGNALIZATION;
-		LOG_WRN("No settings found, set default %d", settings.enable_led_signalization);
-		(void)nvs_write(&fs, SETTINGS_LED_SIGNALIZATION_ID, &settings.enable_led_signalization, sizeof(settings.enable_led_signalization));
-	}
-
-	LOG_INF("SETTINGS light enable				= %d", settings.enable_light_intensity);
-	LOG_INF("SETTINGS presence enable 			= %d", settings.enable_presence);	
-	LOG_INF("SETTINGS led sig enable 			= %d", settings.enable_led_signalization);
-	LOG_INF("SETTINGS threshold_light_intensity	= %d", settings.threshold_light_intensity);
-	LOG_INF("SETTINGS threshold_prescence		= %d", settings.threshold_presence);
+	SETTINGS_print_all();
 }
 
 
 void SETTINGS_save(void)
 {
 	LOG_INF("SAVE SETTINGS !");
-	(void)nvs_write(&fs, SETTINGS_PRESENCE_ID, 		  	&settings.threshold_presence, 			sizeof(settings.threshold_presence));
-	(void)nvs_write(&fs, SETTINGS_LIGHT_ID, 		  	&settings.threshold_light_intensity, 	sizeof(settings.threshold_light_intensity));
-	(void)nvs_write(&fs, SETTINGS_PRESENCE_ENABLE_ID, 	&settings.enable_presence, 				sizeof(settings.enable_presence));
-	(void)nvs_write(&fs, SETTINGS_LIGHT_ENABLE_ID, 	  	&settings.enable_light_intensity, 		sizeof(settings.enable_light_intensity));
-	(void)nvs_write(&fs, SETTINGS_LED_SIGNALIZATION_ID,	&settings.enable_led_signalization, 	sizeof(settings.enable_led_signalization));
+	SETTINGS_print_all();
+
+	int rc = nvs_write(&fs, SETTINGS_ID, &settings, sizeof(settings));
+	if (rc < 0) 
+	{
+		LOG_ERR("Problem writing settings to flash");
+	}
 }

@@ -7,6 +7,7 @@
 #include "settings.h"
 #include "utils.h"
 #include "ir_sensor.h"
+#include "logic.h"
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(ir_sensor, CONFIG_LOG_DEFAULT_LEVEL);
@@ -26,45 +27,37 @@ volatile sths34pf80_func_status_t func_status;
 
 stmdev_ctx_t ir_sensor; 
 
+IR_SENSOR_raw_data_t IR_SENSOR_raw_data;
+
 static int32_t platform_write(void *handle, uint8_t Reg, const uint8_t *Bufp, uint16_t len);
 static int32_t platform_read(void *handle, uint8_t Reg, uint8_t *Bufp, uint16_t len);
 static void platform_delay(uint32_t ms);
 
+// TODO:
+// https://github.com/STMicroelectronics/X-CUBE-MEMS1/blob/main/Middlewares/ST/STM32_InfraredPD_Library/Lib/InfraredPD_CM0P_wc16_ot.a
 
 
 void irsensor_int_cb(const struct device *dev, struct gpio_callback *cb, uint32_t pins)
 {
 	int gpio_state = 0;
+	uint8_t old_present_state = false;
 
 	gpio_state = gpio_pin_get_dt(&ir_sensor_int);
 	LOG_INF("Status: %02x", !gpio_state);
 	
-	if ( settings.enable_presence == true )
+	if ( settings.presence_enable == true )
 	{
-		present_state = !gpio_state;
+		old_present_state = present_state_current;
+		present_state_current = !gpio_state;
+		if ( present_state_current != old_present_state )
+		{
+			LOG_INF("Presence state changed - current: %d", present_state_current);
+			LOGIC_signal();
+		}
 	}
 	else
 	{
 		present_state = true;
-	}
-
-	LOG_INF("Light %d State %d", light_state, present_state);
-
-	// Steruj wyjściem gdy czujnik ruchu jest włączony 
-	if  ( settings.enable_presence == true ) 
-	{
-		new_sensor_state = light_state & present_state;
-		if ( new_sensor_state != sensor_state)
-		{
-			sensor_state = new_sensor_state;
-			LOG_WRN("NEW SENSOR STATE (presence): %d", sensor_state);
-			if ( settings.enable_led_signalization )
-			{
-				LED_set(sensor_state);
-			}
-			
-			OUT_set(sensor_state);
-		}
 	}
 }
 
@@ -125,7 +118,7 @@ int IR_SENSOR_init(void)
 	if (whoami != STHS34PF80_ID)
 	{
 		LOG_ERR("DEVICE WRONG ID: %X", whoami);
-		while(1);
+		//while(1);
 	}
 	else
 	{
@@ -149,10 +142,12 @@ int IR_SENSOR_init(void)
 	/* Set intreupt */
 	sths34pf80_int_or_set(&ir_sensor, STHS34PF80_INT_PRESENCE);
 	sths34pf80_route_int_set(&ir_sensor, STHS34PF80_INT_OR);
+
+	sths34pf80_presence_abs_value_set(&ir_sensor, 1);
 	/* Set threshold from settings */
-	sths34pf80_presence_threshold_set(&ir_sensor, settings.threshold_presence); // less - more sensitve
+	sths34pf80_presence_threshold_set(&ir_sensor, settings.presence_threshold); // less - more sensitve
 	/* Set ODR */
-	sths34pf80_odr_set(&ir_sensor, STHS34PF80_ODR_AT_30Hz);
+	sths34pf80_odr_set(&ir_sensor, STHS34PF80_ODR_AT_8Hz);
 
 	return 1;
 }
@@ -163,15 +158,34 @@ void IR_SENSOR_set_new_threshold(uint16_t threshold)
 	sths34pf80_presence_threshold_set(&ir_sensor, threshold); 
 }
 
+
+int IR_SENSOR_get_all_raw_data(IR_SENSOR_raw_data_t* IR_SENSOR_raw_data) 
+{
+	sths34pf80_tobject_raw_get(&ir_sensor, &IR_SENSOR_raw_data->object_raw);
+	sths34pf80_tambient_raw_get(&ir_sensor, &IR_SENSOR_raw_data->tambient_raw);
+	sths34pf80_tobj_comp_raw_get(&ir_sensor, &IR_SENSOR_raw_data->tobj_comp_raw);
+	sths34pf80_tpresence_raw_get(&ir_sensor, &IR_SENSOR_raw_data->tpresence_raw);
+	sths34pf80_tmotion_raw_get(&ir_sensor, &IR_SENSOR_raw_data->tmotion_raw);
+	sths34pf80_tamb_shock_raw_get(&ir_sensor, &IR_SENSOR_raw_data->tamb_shock_raw);
+	sths34pf80_presence_abs_value_get(&ir_sensor, &IR_SENSOR_raw_data->presence_abs_value);
+
+    return 0; // Success
+}
+
+
 int16_t IR_SENSOR_get_raw(void)
 {
 	int16_t raw;
 
 	sths34pf80_tobject_raw_get(&ir_sensor, &raw);
-
 	return raw;
 }
 
+
+void IR_SENSOR_reset(void)
+{
+	sths34pf80_algo_reset(&ir_sensor);
+}
 
 static int32_t platform_write(void *handle, uint8_t Reg, const uint8_t *Bufp, uint16_t len)
 {

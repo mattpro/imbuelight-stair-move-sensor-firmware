@@ -1,6 +1,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/drivers/gpio.h>
 #include "utils.h"
+#include "settings.h"
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(utils, CONFIG_LOG_DEFAULT_LEVEL);
@@ -65,3 +66,44 @@ void OUT_set(int state)
 {
     gpio_pin_set_dt(&out, state);
 }
+
+
+void LED_connected_signalization(void)
+{
+	for (int i = 0 ; i < 5 ; i ++ )
+	{
+		LED_set(true);
+		k_msleep(50);
+		LED_set(false);
+		k_msleep(50);
+	}
+	LED_set(led_state);
+}
+
+
+void LED_disconnect_signalization(void)
+{
+	for (int i = 0 ; i < 3 ; i ++ )
+	{
+		LED_set(true);
+		k_msleep(50);
+		LED_set(false);
+		k_msleep(50);
+	}
+	LED_set(led_state);
+}
+
+		
+void LED_save_signalization(void)
+{
+	for (int i = 0 ; i < 5 ; i ++ )
+	{
+		LED_set(true);
+		k_msleep(50);
+		LED_set(false);
+		k_msleep(50);
+	}
+	LED_set(led_state);
+}
+
+		

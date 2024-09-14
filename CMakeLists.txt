@@ -11,4 +11,5 @@ target_sources(app PRIVATE
                     src/ir_sensor.c
                     src/settings.c
                     src/sths34pf80_reg.c
+                    src/logic.c
                     )
