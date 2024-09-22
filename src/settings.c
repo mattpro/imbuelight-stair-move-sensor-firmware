@@ -28,18 +28,25 @@ void SETTINGS_load_default(void)
 void SETTINGS_print_all(void)
 {
 	// Print all setting from settings struct
-	LOG_INF("SETTINGS light enable				= %d", settings.light_intensity_enable);
-	LOG_INF("SETTINGS threshold_light_intensity	= %d", settings.light_intensity_threshold);
-	LOG_INF("SETTINGS light_intensity_out_invert= %d", settings.light_intensity_out_invert);
-
-	LOG_INF("SETTINGS presence enable 			= %d", settings.presence_enable);
-	LOG_INF("SETTINGS threshold_prescence		= %d", settings.presence_threshold);
-	LOG_INF("SETTINGS presence_out_invert		= %d", settings.presence_out_invert);
-	
-	LOG_INF("SETTINGS signal_out_logic_function	= %d", settings.signal_out_logic_function);
-	LOG_INF("SETTINGS signal_out_invert			= %d", settings.signal_out_invert);
-
-	LOG_INF("SETTINGS led_signalization_src		= %d", settings.led_signalization_src);
+	k_msleep(10);
+	LOG_WRN("SETTINGS light enable              = %d", settings.light_intensity_enable);
+	k_msleep(10);
+	LOG_WRN("SETTINGS threshold_light_intensity = %d", settings.light_intensity_threshold);
+	k_msleep(10);
+	LOG_WRN("SETTINGS light_intensity_out_invert= %d", settings.light_intensity_out_invert);
+	k_msleep(10);
+	LOG_WRN("SETTINGS presence enable           = %d", settings.presence_enable);
+	k_msleep(10);
+	LOG_WRN("SETTINGS threshold_prescence       = %d", settings.presence_threshold);
+	k_msleep(10);
+	LOG_WRN("SETTINGS presence_out_invert       = %d", settings.presence_out_invert);
+	k_msleep(10);
+	LOG_WRN("SETTINGS signal_out_logic_function = %d", settings.signal_out_logic_function);
+	k_msleep(10);
+	LOG_WRN("SETTINGS signal_out_invert         = %d", settings.signal_out_invert);
+	k_msleep(10);
+	LOG_WRN("SETTINGS led_signalization_src     = %d", settings.led_signalization_src);
+	k_msleep(10);
 }
 
 void SETTINGS_init(void)
@@ -64,7 +71,7 @@ void SETTINGS_init(void)
 		return;
 	}
 	fs.sector_size = info.size;
-	fs.sector_count = 3U;
+	fs.sector_count = 4U;
 
 	rc = nvs_mount(&fs);
 	if (rc) {
@@ -82,7 +89,7 @@ void SETTINGS_load(void)
 	rc = nvs_read(&fs, SETTINGS_ID, &settings, sizeof(settings));
 	if (rc > 0) 
 	{ /* item was found, show it */
-		LOG_INF("Id: %d", SETTINGS_ID);
+		LOG_INF("Id: %d Recived: %d bytes", SETTINGS_ID, rc);
 	} 
 	else   
 	{/* item was not found, add it */
@@ -98,7 +105,6 @@ void SETTINGS_load(void)
 void SETTINGS_save(void)
 {
 	LOG_INF("SAVE SETTINGS !");
-	SETTINGS_print_all();
 
 	int rc = nvs_write(&fs, SETTINGS_ID, &settings, sizeof(settings));
 	if (rc < 0) 

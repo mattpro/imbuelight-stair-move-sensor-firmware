@@ -9,8 +9,7 @@
 #include <zephyr/fs/nvs.h>
 
 
-
-#define FIRMWARE_VERSION 							05 // means 0.5	
+#define FW_VERSION 13 // means 1.3
 
 
 #define DEFAULT_SETTINGS_LIGHT_INTENSITY_THRESHOLD 		300
@@ -50,16 +49,16 @@ extern int16_t current_light;
 extern struct settings_t settings;
 
 enum led_signalization_src_t {
-    LED_SIGNALIZATION_SRC_NONE = 0,
-    LED_SIGNALIZATION_SRC_MOVE_SENSOR = 1,
-    LED_SIGNALIZATION_SRC_LIGHT_SENSOR = 2,
-    LED_SIGNALIZATION_SRC_OUT_SIGNAL = 3
+    LED_SIGNALIZATION_SRC_NONE 			= 0,
+    LED_SIGNALIZATION_SRC_MOVE_SENSOR 	= 1,
+    LED_SIGNALIZATION_SRC_LIGHT_SENSOR 	= 2,
+    LED_SIGNALIZATION_SRC_OUT_SIGNAL 	= 3
 };
 
 enum lout_logic_t {
-    OUT_LOGIC_NONE = 0,
-	OUT_LOGIC_AND = 1,
-	OUT_LOGIC_OR = 2,
+    OUT_LOGIC_NONE	= 0,
+	OUT_LOGIC_AND 	= 1,
+	OUT_LOGIC_OR 	= 2,
 };
 
 struct settings_t{		

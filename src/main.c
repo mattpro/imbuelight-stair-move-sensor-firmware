@@ -32,7 +32,7 @@ bool connection_state = false;
 bool save_setting_flag = false;
 bool ble_connected_flag = false;
 bool led_state = false;
-
+bool set_new_threshold_flag = false;
 
 
 int16_t current_light = 0;
@@ -58,7 +58,6 @@ bool led_signalization_save_flag = false;
 #define CMD_GET_CONFIG 	0xBC
 #define CMD_SEND_DATA 	0x0D
 
-#define FW_VERSION 11 // means 1.1
 
 
 static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data, uint16_t len)
@@ -88,25 +87,12 @@ static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data, uint1
 			settings.presence_threshold = (uint16_t)(((uint16_t)data[7] << 8 ) | data[6] );
 			settings.presence_out_invert = data[8] > 0 ? true : false;
 
-			settings.signal_out_logic_function = data[9];
+			settings.signal_out_logic_function = (enum lout_logic_t)data[9];
 			settings.signal_out_invert = data[10] > 0 ? true : false;
 
 			settings.led_signalization_src =  (enum led_signalization_src_t)data[11];
 
-			
-			IR_SENSOR_set_new_threshold( settings.presence_threshold );
-			//IR_SENSOR_reset();
-			// TODO: Led signalization to indicate save settings
-
-			light_state_current = false;
-			present_state_current = false;
-			light_state = false;
-			present_state = false;
-			sensor_state = false;
-			led_state = false;
-			OUT_set(sensor_state); 
-			LED_set(led_state);
-			LOGIC_signal();
+			set_new_threshold_flag = true;
 			
 			led_signalization_save_flag = true;
 		break;
@@ -126,7 +112,6 @@ static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data, uint1
 			nus_buffer[10] = settings.signal_out_invert;
 			nus_buffer[11] = (uint8_t)settings.led_signalization_src;
 			nus_buffer[12] = FW_VERSION;
-
 
 			bt_nus_send(NULL, nus_buffer, 13);
 		break;
@@ -243,7 +228,6 @@ int main(void)
 		LOG_INF("Bluetooth init failed (err %d)\n", err);
 	}
 
-
 	while(1)
 	{
 		if ( connection_state == true )
@@ -289,10 +273,27 @@ int main(void)
 		}
 		if ( led_signalization_save_flag )
 		{
-			//SETTINGS_save();
+			SETTINGS_save();
  			LED_save_signalization();
 			led_signalization_save_flag = false;
 		}
+		if ( set_new_threshold_flag )
+		{
+			set_new_threshold_flag = false;
+			IR_SENSOR_set_new_threshold( settings.presence_threshold );
+			//IR_SENSOR_reset();
+			// TODO: Led signalization to indicate save settings
+			light_state_current = false;
+			present_state_current = false;
+			light_state = false;
+			present_state = false;
+			sensor_state = false;
+			led_state = false;
+			OUT_set(sensor_state); 
+			LED_set(led_state);
+			LOGIC_signal();
+		}
+
 
 		k_msleep(100);	
 	}
