@@ -26,7 +26,7 @@ static struct bt_data ad[] =
 	BT_DATA(BT_DATA_NAME_COMPLETE, DEVICE_NAME, DEVICE_NAME_LEN),
 };
 
-uint8_t nus_buffer[13];
+uint8_t nus_buffer[17];
 
 bool connection_state = false;
 bool save_setting_flag = false;
@@ -36,15 +36,18 @@ bool set_new_threshold_flag = false;
 
 
 int16_t current_light = 0;
-int16_t ir_sensor_raw = 0;
+int16_t ir_sensor_motion_raw = 0;
+int16_t ir_sensor_presence_raw = 0;
 
 // Direct signal from sensro
 bool light_state_current = false;
 bool present_state_current = false;
+bool motion_state_current = false;
 
 // this can be inverted or no 
 bool light_state = false;
 bool present_state = false;
+bool motion_state = false;
 
 // this is final state
 bool sensor_state = false;
@@ -87,10 +90,14 @@ static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data, uint1
 			settings.presence_threshold = (uint16_t)(((uint16_t)data[7] << 8 ) | data[6] );
 			settings.presence_out_invert = data[8] > 0 ? true : false;
 
-			settings.signal_out_logic_function = (enum lout_logic_t)data[9];
-			settings.signal_out_invert = data[10] > 0 ? true : false;
+			settings.motion_threshold = (uint16_t)(((uint16_t)data[10] << 8 ) | data[9] );
+			settings.motion_enable = data[11] > 0 ? true : false;
+			settings.motion_out_invert = data[12] > 0 ? true : false;
 
-			settings.led_signalization_src =  (enum led_signalization_src_t)data[11];
+			settings.signal_out_logic_function = (enum lout_logic_t)data[13];
+			settings.signal_out_invert = data[14] > 0 ? true : false;
+
+			settings.led_signalization_src =  (enum led_signalization_src_t)data[15];
 
 			set_new_threshold_flag = true;
 			
@@ -108,12 +115,17 @@ static void bt_receive_cb(struct bt_conn *conn, const uint8_t *const data, uint1
 			nus_buffer[6] = settings.presence_threshold >> 8;
 			nus_buffer[7] = settings.presence_threshold & 0xFF;
 			nus_buffer[8] = settings.presence_out_invert;
-			nus_buffer[9] = (uint8_t)settings.signal_out_logic_function;
-			nus_buffer[10] = settings.signal_out_invert;
-			nus_buffer[11] = (uint8_t)settings.led_signalization_src;
-			nus_buffer[12] = FW_VERSION;
+			nus_buffer[9] = settings.motion_threshold >> 8;
+			nus_buffer[10] = settings.motion_threshold & 0xFF;
+			nus_buffer[11] = settings.motion_enable;
+			nus_buffer[12] = settings.motion_out_invert;
 
-			bt_nus_send(NULL, nus_buffer, 13);
+			nus_buffer[13] = (uint8_t)settings.signal_out_logic_function;
+			nus_buffer[14] = settings.signal_out_invert;
+			nus_buffer[15] = (uint8_t)settings.led_signalization_src;
+			nus_buffer[16] = FW_VERSION;
+
+			bt_nus_send(NULL, nus_buffer, 17);
 		break;
 		default:
 			LOG_ERR("CMD - Unknown command");
@@ -210,6 +222,17 @@ void BOOT_info(void)
 }
 
 
+#include "sths34pf80_reg.h"
+#include "settings.h"
+#include "utils.h"
+#include "ir_sensor.h"
+#include "logic.h"
+
+extern stmdev_ctx_t ir_sensor;
+extern volatile sths34pf80_drdy_status_t status;
+extern volatile sths34pf80_func_status_t func_status;
+
+
 int main(void)
 {	
 	BOOT_info();
@@ -230,9 +253,76 @@ int main(void)
 
 	while(1)
 	{
-		if ( connection_state == true )
-		{
-			ir_sensor_raw = IR_SENSOR_get_raw();
+
+			ir_sensor_motion_raw = IR_SENSOR_get_montion_raw();
+			k_msleep(2);	
+			ir_sensor_presence_raw = IR_SENSOR_get_presence_raw();
+
+
+
+
+
+
+
+
+
+
+			/* Odczyt/wyczyszczenie flag statusu w sensorze (side-effect: kasuje IRQ) */
+				sths34pf80_func_status_t fs = (sths34pf80_func_status_t){0};
+				sths34pf80_drdy_status_t st = (sths34pf80_drdy_status_t){0};
+
+				(void)sths34pf80_func_status_get(&ir_sensor, &fs);
+				(void)sths34pf80_drdy_status_get(&ir_sensor, &st);
+
+				/* Zapisz do globalnych (jeśli ktoś czyta gdzie indziej) */
+				func_status = fs;
+				status = st;
+
+				bool motion_flag   = (fs.mot_flag != 0);
+				bool presence_flag = (fs.pres_flag != 0);
+
+				/* (opcjonalnie) diagnostyka pinu:
+				int pin_level = gpio_pin_get_dt(&ir_sensor_int);
+				LOG_DBG("INT pin=%d, mot=%d pres=%d", pin_level, motion_flag, presence_flag);
+				*/
+
+				/* Motion */
+				if (settings.motion_enable) {
+					bool motion_old = motion_state_current;
+					motion_state_current = motion_flag ? 1 : 0;
+
+					if (motion_state_current != motion_old) {
+						LOG_INF("Motion state changed - current: %d", motion_state_current);
+						LOGIC_signal();
+					}
+				} else {
+					/* zgodnie z poprzednią logiką – motion „wymuszone” */
+					motion_state_current = 1;
+				}
+
+				/* Presence */
+				if (settings.presence_enable) {
+					bool present_old = present_state_current;
+					present_state_current = presence_flag ? 1 : 0;
+
+					if (present_state_current != present_old) {
+						LOG_INF("Presence state changed - current: %d (motion=%d)",
+								present_state_current, motion_flag);
+						LOGIC_signal();
+					}
+				} else {
+					/* zgodnie z poprzednią logiką – presence „wymuszone” */
+					present_state_current = 1;
+				}
+
+
+
+
+
+
+
+
+
 
 			// IR_SENSOR_get_all_raw_data(&IR_SENSOR_raw_data);
 
@@ -247,24 +337,29 @@ int main(void)
 			// 		IR_SENSOR_raw_data.presence_abs_value);
 
 			//LOG_INF("LIGHT raw: %4d state: %d MOV raw: %4d state %d", current_light, light_state, ir_sensor_raw, present_state);
-
+		if ( connection_state == true )
+		{
 			nus_buffer[0] = CMD_SEND_DATA;
 
 			nus_buffer[1] = current_light >> 8;
 			nus_buffer[2] = current_light & 0xFF;
 			nus_buffer[3] = light_state;
-			nus_buffer[4] = ir_sensor_raw >> 8;
-			nus_buffer[5] = ir_sensor_raw & 0xFF;
-			nus_buffer[6] = present_state;
-			nus_buffer[7] = sensor_state;
+			nus_buffer[4] = ir_sensor_motion_raw >> 8;
+			nus_buffer[5] = ir_sensor_motion_raw & 0xFF;
+			nus_buffer[6] = ir_sensor_presence_raw >> 8;
+			nus_buffer[7] = ir_sensor_presence_raw & 0xFF;
+			nus_buffer[8] = present_state;
+			nus_buffer[9] = motion_state;
+			nus_buffer[10] = sensor_state;
 
-			bt_nus_send(NULL, nus_buffer, 8);
+
+			bt_nus_send(NULL, nus_buffer, 11);
 		}
 
 		if ( led_signalization_connected_flag )
 		{
-			led_signalization_connected_flag = false;
  			LED_connected_signalization();
+			led_signalization_connected_flag = false;
 		}
 		if ( led_signalization_disconnect_flag )
 		{
@@ -280,7 +375,9 @@ int main(void)
 		if ( set_new_threshold_flag )
 		{
 			set_new_threshold_flag = false;
-			IR_SENSOR_set_new_threshold( settings.presence_threshold );
+			IR_SENSOR_set_new_motion_threshold(settings.motion_threshold);
+			IR_SENSOR_set_new_presence_threshold(settings.presence_threshold);
+			LOG_INF("New thresholds set: motion: %d, presence: %d", settings.motion_threshold, settings.presence_threshold);
 			//IR_SENSOR_reset();
 			// TODO: Led signalization to indicate save settings
 			light_state_current = false;
@@ -295,7 +392,7 @@ int main(void)
 		}
 
 
-		k_msleep(100);	
+		k_msleep(35);	
 	}
 
 	return 0;

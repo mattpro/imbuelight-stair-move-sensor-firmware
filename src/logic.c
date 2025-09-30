@@ -7,6 +7,12 @@
 #include "settings.h"
 #include "utils.h"
 
+extern bool present_state_current;
+extern bool motion_state_current;
+extern bool present_state; /* nieużywane tutaj, ale istnieje w projekcie */
+extern bool motion_state;  /* nieużywane tutaj, ale istnieje w projekcie */
+
+
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(logic, CONFIG_LOG_DEFAULT_LEVEL);
@@ -39,6 +45,15 @@ void LOGIC_signal(void)
 	else
 	{
 		present_state = !present_state_current;
+	}
+
+	if ( settings.motion_out_invert == false )
+	{
+		motion_state = motion_state_current; 
+	}
+	else
+	{
+		motion_state = !motion_state_current;
 	}
 
 
@@ -92,7 +107,7 @@ void LOGIC_signal(void)
 	switch(settings.led_signalization_src)
 	{
 		case LED_SIGNALIZATION_SRC_MOVE_SENSOR:
-			led_state = present_state;
+			led_state = motion_state;
 		break;
 		case LED_SIGNALIZATION_SRC_LIGHT_SENSOR:
 			led_state = light_state;

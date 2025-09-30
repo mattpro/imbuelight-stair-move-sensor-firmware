@@ -9,8 +9,11 @@
 #include <zephyr/fs/nvs.h>
 
 
-#define FW_VERSION 13 // means 1.3
+#define FW_VERSION 15 // means 1.5
 
+#define DEFAULT_SETTINGS_MOTION_ENABLE 					true
+#define DEFAULT_SETTINGS_MOTION_THRESHOLD 				200
+#define DEFAULT_SETTINGS_MOTION_OUT_INVERT 				false
 
 #define DEFAULT_SETTINGS_LIGHT_INTENSITY_THRESHOLD 		300
 #define DEFAULT_SETTINGS_LIGHT_INTENSITY_ENABLE 		true
@@ -37,6 +40,7 @@
 
 extern bool light_state_current;
 extern bool present_state_current;
+extern bool motion_state_current;
 extern bool light_state;
 extern bool present_state;
 extern bool sensor_state;
@@ -61,7 +65,11 @@ enum lout_logic_t {
 	OUT_LOGIC_OR 	= 2,
 };
 
-struct settings_t{		
+struct settings_t{	
+	bool 				motion_enable;
+	uint16_t 			motion_threshold;
+	bool 				motion_out_invert;
+	
 	bool 				presence_enable;
 	uint16_t 			presence_threshold;
 	bool 				presence_out_invert;

@@ -22,8 +22,13 @@ extern IR_SENSOR_raw_data_t IR_SENSOR_raw_data;
 
 
 int IR_SENSOR_init(void);
-void IR_SENSOR_set_new_threshold(uint16_t threshold);
-int16_t IR_SENSOR_get_raw(void);
+void IR_SENSOR_set_new_motion_threshold(uint16_t threshold);
+void IR_SENSOR_set_new_presence_threshold(uint16_t threshold);
+
+int16_t IR_SENSOR_get_montion_raw(void);
+int16_t IR_SENSOR_get_presence_raw(void);
+
+
 void IR_SENSOR_reset(void);
 int IR_SENSOR_get_all_raw_data(IR_SENSOR_raw_data_t* IR_SENSOR_raw_data);
 

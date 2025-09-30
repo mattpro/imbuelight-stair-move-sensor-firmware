@@ -11,6 +11,10 @@ static struct nvs_fs fs;
 
 void SETTINGS_load_default(void)
 {
+	settings.motion_enable 				= DEFAULT_SETTINGS_MOTION_ENABLE;
+	settings.motion_threshold 			= DEFAULT_SETTINGS_MOTION_THRESHOLD;
+	settings.motion_out_invert 			= DEFAULT_SETTINGS_MOTION_OUT_INVERT;
+
     settings.presence_threshold 		= DEFAULT_SETTINGS_PRESENCE_THRESHOLD;
     settings.presence_enable 			= DEFAULT_SETTINGS_PRESENCE_ENABLE;
     settings.presence_out_invert 		= DEFAULT_SETTINGS_PRESENCE_OUT_INVERT;
@@ -28,25 +32,31 @@ void SETTINGS_load_default(void)
 void SETTINGS_print_all(void)
 {
 	// Print all setting from settings struct
-	k_msleep(10);
+	k_msleep(100);
 	LOG_WRN("SETTINGS light enable              = %d", settings.light_intensity_enable);
-	k_msleep(10);
+	k_msleep(100);
 	LOG_WRN("SETTINGS threshold_light_intensity = %d", settings.light_intensity_threshold);
-	k_msleep(10);
+	k_msleep(100);
 	LOG_WRN("SETTINGS light_intensity_out_invert= %d", settings.light_intensity_out_invert);
-	k_msleep(10);
+	k_msleep(100);
 	LOG_WRN("SETTINGS presence enable           = %d", settings.presence_enable);
-	k_msleep(10);
+	k_msleep(100);
 	LOG_WRN("SETTINGS threshold_prescence       = %d", settings.presence_threshold);
-	k_msleep(10);
+	k_msleep(100);
 	LOG_WRN("SETTINGS presence_out_invert       = %d", settings.presence_out_invert);
-	k_msleep(10);
+	k_msleep(100);
 	LOG_WRN("SETTINGS signal_out_logic_function = %d", settings.signal_out_logic_function);
-	k_msleep(10);
+	k_msleep(100);
 	LOG_WRN("SETTINGS signal_out_invert         = %d", settings.signal_out_invert);
-	k_msleep(10);
+	k_msleep(100);
 	LOG_WRN("SETTINGS led_signalization_src     = %d", settings.led_signalization_src);
-	k_msleep(10);
+	k_msleep(100);
+	LOG_WRN("SETTINGS motion enable             = %d", settings.motion_enable);
+	k_msleep(100);
+	LOG_WRN("SETTINGS threshold_motion          = %d", settings.motion_threshold);
+	k_msleep(100);
+	LOG_WRN("SETTINGS motion_out_invert         = %d", settings.motion_out_invert);
+	k_msleep(100);
 }
 
 void SETTINGS_init(void)
@@ -111,4 +121,6 @@ void SETTINGS_save(void)
 	{
 		LOG_ERR("Problem writing settings to flash");
 	}
+
+	SETTINGS_print_all();
 }
